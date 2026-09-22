@@ -1,0 +1,22 @@
+{
+  "description": "Historical Qwen3-8B main-method results; comparison targets, not newly reproduced scores.",
+  "first_session_rule": "gate_zero_state",
+  "metrics": {
+    "perma/clean_sd": 0.9056666666666666,
+    "perma/noisy_sd": 0.9120000000000001,
+    "perma/style_sd": 0.9136666666666666,
+    "perma/style_long_sd": 0.9096666666666667,
+    "perma/clean_md": 0.7967120984486793,
+    "perma/noisy_md": 0.8062462318852518,
+    "perma/style_md": 0.8132638783249779,
+    "perma/average": 0.8653174583798443,
+    "perma/main_four_average": 0.8551562492501494,
+    "personamem_v2/overall": 0.4022,
+    "personamem_v2/self": 0.4361322018758374,
+    "personamem_v2/current": 0.4728054642044017,
+    "prefeval/overall": 0.7234567901234568,
+    "prefeval/turns10": 0.6981481481481482,
+    "prefeval/turns70": 0.7240740740740741,
+    "prefeval/turns300": 0.7481481481481481
+  }
+}

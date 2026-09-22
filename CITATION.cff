@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use RPMem, please cite the paper below."
+type: software
+title: RPMem
+license: Apache-2.0
+repository-code: "https://github.com/Quark-Medical/rpmem"
+url: "https://arxiv.org/abs/2609.23466"
+authors:
+  - family-names: Zhao
+    given-names: Fanyu
+  - family-names: Cao
+    given-names: Ruike
+  - family-names: Dong
+    given-names: Liang
+  - family-names: Yao
+    given-names: Fugen
+  - family-names: Xu
+    given-names: Jian
+  - family-names: Jiang
+    given-names: Guanjun
+  - family-names: Zhang
+    given-names: Han
+  - family-names: Zhao
+    given-names: Yifei
+  - family-names: Li
+    given-names: Yinsheng
+preferred-citation:
+  type: article
+  title: "RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents"
+  journal: "arXiv preprint arXiv:2609.23466"
+  year: 2026
+  url: "https://arxiv.org/abs/2609.23466"
+  authors:
+    - family-names: Zhao
+      given-names: Fanyu
+    - family-names: Cao
+      given-names: Ruike
+    - family-names: Dong
+      given-names: Liang
+    - family-names: Yao
+      given-names: Fugen
+    - family-names: Xu
+      given-names: Jian
+    - family-names: Jiang
+      given-names: Guanjun
+    - family-names: Zhang
+      given-names: Han
+    - family-names: Zhao
+      given-names: Yifei
+    - family-names: Li
+      given-names: Yinsheng

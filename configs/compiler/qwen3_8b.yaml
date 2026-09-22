@@ -1,0 +1,46 @@
+# Main Qwen3-8B session compiler (Fixed FKL).
+# 664128 sessions, batch 64, five passes: ceil(664128 / 64) * 5 = 51885.
+
+# Architecture
+n_layers: 36
+d_latent: 512
+lora_r: 8
+target_modules: [down_proj]
+per_layer_processing: true
+per_rank_gen: true
+num_pre_head_layers: 4
+n_latent_queries: 8
+num_blocks: 9
+
+# Model
+base_model_path: Qwen/Qwen3-8B
+ctx_encoder_path: answerdotai/ModernBERT-base
+
+# Data and objective
+max_ctx_len: 4096
+max_seq_len: 640
+use_packing: false
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+objective: offline_fkl
+
+# Training
+lr: 4.0e-5
+weight_decay: 0.01
+warmup_steps: 500
+max_steps: 51885
+gradient_accumulation_steps: 8
+max_grad_norm: 1.0
+l1_reg_coef: 0.01
+use_per_ctx_average_loss: true
+lora_alpha: 32.0
+lora_dropout: 0.0
+
+# Checkpointing
+save_steps: 5000
+save_training_state: true
+save_total_limit: 2
+logging_steps: 50
+dataloader_num_workers: 8
+seed: 42
+output_dir: train_outputs/qwen3_8b_fixed_trajectory_offline_fkl

@@ -1,0 +1,127 @@
+format: memlora_corpus_build_v1
+name: qwen3_8b_formal_agent_memory_v1
+seed: 42
+
+# Immutable model-facing contract.
+tokenizer: models/Qwen3-8B
+tokenizer_name: qwen3_8b
+tokenizer_revision: local-frozen-snapshot
+context_tokenizers:
+  - name: modernbert_base
+    path: models/ModernBERT-base
+    revision: local-frozen-snapshot
+    add_special_tokens: true
+max_context_tokens: 4096
+require_references: true
+
+# One percent context-heldout validation plus two query-heldout probes for
+# every accepted training context when enough probes are available.
+session_validation_fraction: 0.01
+query_validation_probes: 2
+
+# Bounded files and row groups for distributed random access.
+shard_rows: 4096
+row_group_rows: 64
+source_batch_rows: 1024
+workers: 64
+log_every: 10000
+longest_context_candidates: 256
+near_duplicate_hamming: 3
+minimum_near_tokens: 20
+
+# Paper-facing corpus gates. The builder does not publish manifest.json when
+# any gate fails.
+enforce_launch_gates: true
+minimum_accepted_sessions: 500000
+minimum_context_tokens: 500000000
+minimum_mean_probes_per_session: 10.0
+target_context_tokens: 550000000
+target_domain_token_shares:
+  conversation: 0.35
+  tool: 0.25
+  coding: 0.20
+  synthetic: 0.20
+# Source normalization retains its stricter 3pp quota tolerance. The final
+# global exact/near-dedup pass can remove additional contamination-safe coding
+# trajectories after source caps have been applied, so publication accepts a
+# 3.5pp post-dedup deviation and records the observed shares in stats.json.
+token_share_tolerance: 0.035
+
+excluded_sources:
+  - perma
+  - wildchat
+  - personalens
+  - locomo
+  - msc
+  - longmemeval
+  - mem2actbench
+  - toolace
+  - bfcl
+  - oasst1
+  - oasst2
+  - state-bench
+
+# Inputs are enriched, evidence-linked canonical shards. Raw source download,
+# source-specific normalization, probe generation, and coding repo/cutoff
+# filtering happen before this immutable final build.
+sources:
+  - name: ultrachat-200k-enriched-v1
+    domain: conversation
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/ultrachat_200k/part-*.jsonl
+    license: MIT
+    revision: formal-enriched-v3
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k
+
+  - name: taskmaster2-enriched-v1
+    domain: tool
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/taskmaster2/part-*.jsonl
+    license: CC-BY-4.0
+    revision: formal-enriched-v3
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/DeepPavlov/TaskMaster2
+
+  - name: schema-guided-dialog-enriched-v1
+    domain: tool
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/schema_guided_dialog/part-*.jsonl
+    license: CC-BY-SA-4.0
+    revision: formal-enriched-v3
+    external_api_allowed: false
+    source_url: https://github.com/google-research-datasets/dstc8-schema-guided-dialogue
+
+  - name: toucan-sft-enriched-v1
+    domain: tool
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/toucan_sft/part-*.jsonl
+    license: Apache-2.0
+    revision: formal-enriched-v3
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/Agent-Ark/Toucan-1.5M
+
+  - name: swe-zero-openhands-filtered-enriched-v1
+    domain: coding
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/swe_zero_openhands/part-*.jsonl
+    license: CC-BY-4.0-plus-source-repository-licenses
+    revision: formal-filtered-enriched-v3
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/nvidia/SWE-Zero-openhands-trajectories
+
+  - name: controlled-agent-synthetic-v1
+    domain: synthetic
+    adapter: canonical
+    paths:
+      - ../../data/phase1/formal_v1/enriched/controlled_synthetic/part-*.jsonl
+    license: project-generated-research-data
+    revision: formal-enriched-v3
+    external_api_allowed: false
+
+output_dir: ../../outputs/phase1/formal_qwen3_8b/corpus_v1
