@@ -8,15 +8,13 @@ It requires no pretrained weights, dataset, or GPU.
 | Goal | Read |
 | --- | --- |
 | Compile sessions, update memory, and generate responses | [API usage](usage.md) |
-| Organize compiler and downstream gate checkpoints | [Checkpoint layout](weights.md) |
-| Load historical checkpoints or export portable ones | [Checkpoint compatibility](checkpoints.md) |
+| Load compiler and downstream gate checkpoints | [Checkpoints](checkpoints.md) |
 
 ## Training and evaluation
 
 | Goal | Read |
 | --- | --- |
-| Understand the data components and their availability | [Prepared data](prepared-data.md) |
-| Trace source datasets and preprocessing | [Corpus sources](compiler-data-sources.md) |
+| Prepare compiler data and teacher targets | [Data preparation](data.md) |
 | Train the compiler, consolidation gate, or transfer head | [Reproduction](reproduction.md) |
 | Prepare and evaluate the three benchmarks | [Benchmark workflows](benchmarks.md) |
 | Evaluate saved checkpoints across the main table | [Saved-weight evaluation](result-reproduction.md) |

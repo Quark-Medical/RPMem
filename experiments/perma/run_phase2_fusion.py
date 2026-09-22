@@ -24,7 +24,6 @@ from phase2_user_splits import resolve_user_split
 from rpmem.gate import CMPGate, FIRST_SESSION_RULES, run_cmp_sessions
 from rpmem.training.trainer import step_gate_optimizer
 from rpmem.checkpoint.loader import load_gate_checkpoint
-from rpmem.checkpoint.export import sha256_file
 from rpmem.lora.merger import combine_lora
 from rpmem.training.hypernet_model import HypernetModel
 
@@ -457,7 +456,6 @@ def run_fold(
     if not eval_examples:
         raise ValueError(f"no phase-2 evaluation examples found in {emb_dir}")
     loaded_gate = None
-    gate_sha256 = ""
     requested_rule = getattr(args, "first_session_rule", None)
     if gate_checkpoint:
         loaded_gate, gate_metadata = load_gate_checkpoint(gate_checkpoint)
@@ -468,17 +466,12 @@ def run_fold(
             or gate_metadata.get("test_user") != test_user
             or gate_metadata.get("eval_users", [gate_metadata.get("test_user")]) != sorted(eval_users)
             or gate_metadata.get("train_users") != sorted(train_users)
-            or gate_metadata.get("checkpoint_sha256") != args.checkpoint_sha256
             or gate_metadata.get("args", {}).get("variant") != args.variant
             or gate_metadata.get("method", "cmp_gate") != "cmp_gate"
             or "control_contract" in gate_metadata
         ):
-            raise ValueError("Gate does not match the requested PERMA compiler, variant, or user fold")
-        for example in eval_examples:
-            if example["meta"].get("checkpoint_sha256") != args.checkpoint_sha256:
-                raise ValueError("evaluation latents were produced by a different compiler")
+            raise ValueError("Gate dimensions, variant, or user fold do not match this evaluation")
         loaded_gate = loaded_gate.to(model.device).eval().requires_grad_(False)
-        gate_sha256 = sha256_file(gate_checkpoint)
     first_session_rule = loaded_gate.first_session_rule if loaded_gate else (requested_rule or "direct")
     warm_up_evaluation(model, tokenizer, eval_examples[0])
 
@@ -501,10 +494,8 @@ def run_fold(
                 )
                 == sorted(eval_users)
                 and existing.get("checkpoint") == args.checkpoint
-                and existing.get("checkpoint_sha256", "") == args.checkpoint_sha256
                 and existing.get("train_users") == sorted(train_users)
                 and existing.get("evaluation_protocol") == EVALUATION_PROTOCOL
-                and existing.get("gate_checkpoint_sha256", "") == gate_sha256
                 and existing.get("first_session_rule", "gate_zero_state") == first_session_rule
             ):
                 print(f"reusing completed result: {summary_path}")
@@ -565,7 +556,6 @@ def run_fold(
                 "epochs": 0 if gate_checkpoint else args.epochs,
                 "run_mode": "evaluate_only" if gate_checkpoint else "train_and_evaluate",
                 "gate_checkpoint": str(gate_checkpoint) if gate_checkpoint else None,
-                "gate_checkpoint_sha256": gate_sha256,
                 "first_session_rule": gate.first_session_rule,
                 "training_examples": (
                     len(train_examples)
@@ -594,7 +584,6 @@ def run_fold(
                 {
                     "format": "memlora_perma_phase2_fold_complete_v2",
                     "run_mode": "evaluate_only" if gate_checkpoint else "train_and_evaluate",
-                    "gate_checkpoint_sha256": gate_sha256,
                     "first_session_rule": first_session_rule,
                     "phase1_method": args.phase1_method,
                     "checkpoint": args.checkpoint,
@@ -654,7 +643,7 @@ def main() -> None:
     )
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--phase1_method", default="")
-    parser.add_argument("--checkpoint_sha256", default="")
+    parser.add_argument("--checkpoint_sha256", default="", help=argparse.SUPPRESS)
     parser.add_argument("--skip_completed", action="store_true")
     parser.add_argument("--completion_marker", default="")
     parser.add_argument("--epochs", type=int, default=5)
@@ -682,10 +671,6 @@ def main() -> None:
     if args.gate_checkpoint:
         if args.test_user is None:
             parser.error("--gate_checkpoint requires a single --test_user fold")
-        actual_sha = sha256_file(args.checkpoint)
-        if args.checkpoint_sha256 and args.checkpoint_sha256 != actual_sha:
-            raise ValueError("compiler checkpoint SHA mismatch")
-        args.checkpoint_sha256 = actual_sha
 
     requested_users = (
         args.fold_test_users

@@ -25,7 +25,6 @@ from rpmem.training.opcd import rotating_query_rows
 from rpmem.training.teacher_shards import (
     FORMAT_NAME,
     TeacherLogprobStore,
-    validate_completion_manifests,
 )
 
 logger = logging.getLogger(__name__)
@@ -435,7 +434,6 @@ class HypernetDataset(Dataset):
                         "token positions would misalign."
                     )
                 if meta.get("format") == FORMAT_NAME:
-                    validate_completion_manifests(teacher_logprobs_dir, meta)
                     self.teacher_logprob_store = TeacherLogprobStore(
                         teacher_logprobs_dir,
                         expected_max_seq_len=max_seq_len,

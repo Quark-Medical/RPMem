@@ -10,5 +10,4 @@ Han Zhang, Yifei Zhao, and Yinsheng Li. Submitted September 20, 2026.
 
 The paper is hosted on arXiv rather than duplicated in this repository.
 See the [README citation](../README.md#citation) or [CITATION.cff](../CITATION.cff)
-for citation metadata. Internal writing notes and draft manuscripts are not
-part of the code release.
+for citation metadata.

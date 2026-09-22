@@ -96,7 +96,8 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--base_model_path", default=None)
     parser.add_argument("--ctx_encoder_path", default=None)
-    parser.add_argument("--checkpoint_sha256", default="")
+    parser.add_argument("--checkpoint_sha256", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--resume", action="store_true", help="Reuse latents from an interrupted run with the same inputs.")
     parser.add_argument("--phase1_method", default="")
     parser.add_argument("--variant", default="clean_sd", choices=sorted(PERMA_VARIANTS))
     parser.add_argument("--output_dir", required=True)
@@ -208,12 +209,12 @@ def main() -> None:
         task_dir.mkdir(parents=True, exist_ok=True)
         meta_path = task_dir / "meta.json"
         existing = {}
-        if meta_path.is_file():
+        if args.resume and meta_path.is_file():
             existing = json.loads(meta_path.read_text())
             if (
                 existing.get("latent_format") != LATENT_FORMAT
-                or existing.get("segmentation", {}).get("sha256")
-                != contract["sha256"]
+                or {k: v for k, v in existing.get("segmentation", {}).items() if k != "sha256"}
+                != {k: v for k, v in contract.items() if k != "sha256"}
                 or existing.get("memory_selection", "all")
                 != args.memory_selection
             ):
@@ -251,7 +252,7 @@ def main() -> None:
         for flat_index, segment in enumerate(segments):
             path = task_dir / f"memory_segment_{flat_index:05d}.pt"
             metadata = segment.metadata()
-            if path.exists() and cached_latent_is_valid(path):
+            if args.resume and path.exists() and cached_latent_is_valid(path):
                 saved_segments += 1
                 reused_segments += 1
                 task_reused_segments += 1

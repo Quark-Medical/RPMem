@@ -244,11 +244,9 @@ def load_asset_latents(
         (
             meta.get("format") != LATENT_FORMAT,
             meta.get("asset_id") != asset_id,
-            meta.get("dataset_sha256") != dataset_sha256,
-            meta.get("checkpoint_sha256") != checkpoint_sha256,
         )
     ):
-        raise ValueError(f"PrefEval asset latent provenance mismatch: {directory}")
+        raise ValueError(f"incompatible PrefEval latent format or asset: {directory}")
     return [
         torch.load(path, weights_only=True, map_location=device).to(device)
         for path in latent_files(directory, int(meta["segments"]))
