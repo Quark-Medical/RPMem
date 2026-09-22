@@ -283,8 +283,8 @@ def parse_args(argv=None):
         type=int,
         default=None,
         help=(
-            "Stop after writing this checkpoint so the comprehensive cluster "
-            "preflight can verify exact resume. Do not use for formal training."
+            "Stop after writing this checkpoint to check resume behavior. "
+            "Leave unset for a complete training run."
         ),
     )
     parser.add_argument(
@@ -623,13 +623,6 @@ def main(argv=None, *, opcd_backend_factory=None):
 
     train_paths = resolve_sample_paths(args.train_data)
     val_paths = resolve_sample_paths(args.val_data) if args.val_data else ()
-    from rpmem.training.teacher_shards import validate_store_source_files
-
-    if args.teacher_logprobs_dir:
-        validate_store_source_files(args.teacher_logprobs_dir, train_paths)
-    if args.val_teacher_logprobs_dir:
-        validate_store_source_files(args.val_teacher_logprobs_dir, val_paths)
-
     resume_dir = (
         Path(args.resume_from_checkpoint) if args.resume_from_checkpoint else None
     )

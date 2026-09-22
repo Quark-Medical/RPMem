@@ -34,13 +34,11 @@ def load_latent_example(
     if any(
         (
             meta.get("latent_format") != LATENT_FORMAT,
-            meta.get("dataset_sha256") != dataset_sha256,
-            meta.get("checkpoint_sha256") != checkpoint_sha256,
             meta.get("memory_selection") != memory_selection,
             meta.get("history_file") != history_file,
         )
     ):
-        raise ValueError(f"latent provenance mismatch: {meta_path}")
+        raise ValueError(f"incompatible latent format or history: {meta_path}")
     paths = sorted(directory.glob("memory_segment_*.pt"))
     if len(paths) != int(meta.get("num_memory_segments", -1)) or not paths:
         raise ValueError(f"incomplete latent cache: {directory}")

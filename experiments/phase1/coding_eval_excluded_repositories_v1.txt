@@ -1,4 +1,4 @@
-# Frozen coding-evaluation repository exclusion manifest, version 1.
+# Frozen compiler-corpus repository exclusion manifest, version 1.
 #
 # Dataset: SWE-bench-Live/SWE-bench-Live
 # Revision: a637bd46829f3132e12938c8a0ca93173a977b8e
@@ -6,11 +6,11 @@
 # Tasks: 500
 # Repositories: 100
 # Task created_at range: 2024-07-07T15:20:53 to 2025-04-30T20:00:24
-# Frozen: 2026-07-12
 #
 # One lower-case owner/repository per line. Every repository in the pinned
-# verified split is excluded, even if only a subset is used in the final
-# chronological multi-session coding-memory evaluation.
+# verified split is excluded during compiler-corpus normalization by
+# formal_sources_v1.yaml. This list preserves the training-data filter; it
+# does not provide or claim a coding-memory evaluation workflow in this release.
 ag2ai/faststream
 aider-ai/aider
 aiogram/aiogram

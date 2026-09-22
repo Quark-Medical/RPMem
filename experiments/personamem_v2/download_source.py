@@ -136,7 +136,7 @@ def download_file(
         return False
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_name(f".{destination.name}.partial-{os.getpid()}")
-    headers = {"User-Agent": "memlora-personamem-v2-downloader/1"}
+    headers = {"User-Agent": "rpmem-personamem-v2-downloader/1"}
     token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"

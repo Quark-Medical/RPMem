@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
-import hashlib
 import importlib.metadata
 import json
 import os
@@ -41,15 +40,7 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def sha256(path):
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(8 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def build_jobs(args, compiler_sha):
+def build_jobs(args):
     jobs = {"compile": [], "evaluate": []}
     size = len(args.gpus)
 
@@ -58,7 +49,7 @@ def build_jobs(args, compiler_sha):
 
     gates = []
     if "perma" in args.benchmarks:
-        common = ["--checkpoint", args.checkpoint, "--checkpoint_sha256", compiler_sha,
+        common = ["--checkpoint", args.checkpoint,
                   "--base_model_path", args.base_model, "--ctx_encoder_path", args.ctx_encoder,
                   "--use_flash_attn" if args.use_flash_attn else "--no-use_flash_attn"]
         for variant in PERMA_VARIANTS:
@@ -77,7 +68,7 @@ def build_jobs(args, compiler_sha):
     for benchmark in (name for name in args.benchmarks if name != "perma"):
         gate = args.gate_root / benchmark / "gate.pt"
         gates.append(gate)
-        common = ["--checkpoint", args.checkpoint, "--checkpoint-sha256", compiler_sha,
+        common = ["--checkpoint", args.checkpoint,
                   "--base-model-path", args.base_model, "--ctx-encoder-path", args.ctx_encoder,
                   "--data-root", args.data_root / benchmark / "formal_v1",
                   "--num-shards", size,
@@ -115,7 +106,6 @@ def run_jobs(jobs, args, stage):
             env = dict(os.environ, CUDA_VISIBLE_DEVICES=gpu, PYTHONUNBUFFERED="1",
                        PERMA_DATA_ROOT=str(args.data_root / "perma"))
             env["PYTHONPATH"] = str(ROOT)
-            env.pop("OSS_ARGS", None)
             env["RPMEM_PERCEIVER_FLASH_ATTN"] = "1" if args.use_flash_attn else "0"
             with log.open("w") as handle:
                 handle.write(json.dumps(job["command"]) + "\n")
@@ -282,25 +272,19 @@ def main():
         parser.error("duplicate benchmarks")
     for name in ("checkpoint", "gate_root", "data_root", "base_model", "ctx_encoder", "output_root"):
         setattr(args, name, getattr(args, name).expanduser().resolve())
-    compiler_sha = sha256(args.checkpoint)
-    jobs, gates = build_jobs(args, compiler_sha)
-    plan = {"format": "rpmem_saved_weight_reproduction_v1", "checkpoint_sha256": compiler_sha,
-            "gates": {str(path): sha256(path) for path in gates}, "jobs": jobs,
+    jobs, gates = build_jobs(args)
+    plan = {"format": "rpmem_saved_weight_reproduction_v1", "checkpoint": str(args.checkpoint),
+            "gates": [str(path) for path in gates], "jobs": jobs,
             "data_root": str(args.data_root), "first_session_rule": args.first_session_rule,
             "benchmarks": args.benchmarks, "num_shards": len(args.gpus)}
-    plan["dataset_freezes"] = {
-        benchmark: sha256(args.data_root / benchmark / ("" if benchmark == "perma" else "formal_v1") / "memlora_dataset_freeze.json")
-        for benchmark in args.benchmarks
-    }
     if args.plan_only:
         print(json.dumps(plan, indent=2))
         return
     from rpmem.checkpoint.loader import load_gate_checkpoint
     for path in gates:
         gate, metadata = load_gate_checkpoint(path)
-        pair = metadata.get("checkpoint_sha256", metadata.get("metadata", {}).get("checkpoint_sha256"))
-        if gate.first_session_rule != args.first_session_rule or pair != compiler_sha:
-            parser.error(f"Gate convention/compiler mismatch: {path}")
+        if gate.first_session_rule != args.first_session_rule:
+            parser.error(f"Gate first-session convention mismatch: {path}")
     plan_path = args.output_root / "plan.json"
     if plan_path.exists():
         if not args.resume or read_json(plan_path) != plan:

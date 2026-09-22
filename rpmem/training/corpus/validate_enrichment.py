@@ -51,7 +51,7 @@ def validate_enrichment(
     input_paths = _expand_paths(inputs, relative_to)
     output_paths = _expand_paths(outputs, relative_to)
 
-    with tempfile.TemporaryDirectory(prefix="memlora-enrichment-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="rpmem-enrichment-") as tmp:
         connection = sqlite3.connect(Path(tmp) / "coverage.sqlite")
         connection.execute(
             "CREATE TABLE inputs (session_id TEXT PRIMARY KEY, base_digest TEXT NOT NULL, "

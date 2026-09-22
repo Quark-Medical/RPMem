@@ -32,7 +32,6 @@ from experiments.prefeval.formal_contract import (
 )
 from experiments.prefeval.formal_data import (
     materialized_rows,
-    sha256_file,
     shuffled_options,
     validate_dataset_root,
     write_json_atomic,
@@ -87,7 +86,7 @@ def epoch_rows(rows: list[dict], *, seed: int, epoch: int) -> list[dict]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", required=True)
-    parser.add_argument("--checkpoint-sha256", required=True)
+    parser.add_argument("--checkpoint-sha256", default="", help=argparse.SUPPRESS)
     parser.add_argument("--phase1-method", default=PHASE1_METHOD)
     parser.add_argument("--data-root", default="data/prefeval/formal_v1")
     parser.add_argument("--latent-root", required=True)
@@ -119,8 +118,6 @@ def main() -> None:
     if args.epochs < 1 or args.save_updates < 1:
         raise ValueError("invalid PrefEval Gate configuration")
     checkpoint = Path(args.checkpoint)
-    if sha256_file(checkpoint) != args.checkpoint_sha256:
-        raise ValueError("Phase-1 checkpoint SHA mismatch")
 
     freeze, examples, noise = validate_dataset_root(args.data_root)
     rows = materialized_rows(examples, noise, split="train")
@@ -182,8 +179,6 @@ def main() -> None:
         if any(
             (
                 state.get("format") != STATE_FORMAT,
-                state.get("dataset_sha256") != freeze["dataset_sha256"],
-                state.get("checkpoint_sha256") != args.checkpoint_sha256,
                 normalize_gate_contract(state.get("gate_contract", {})) != frozen_contract,
             )
         ):

@@ -1,16 +1,12 @@
 # Main-method benchmark workflows
 
 Run these commands from the repository root after installing
-`.[train,experiments]`. They use local files and one CUDA GPU by default. They do
-not need Ray, OSS, the company platform, or the old research repository. The
-commands below are execution instructions. For one orchestration entry point covering
+`.[train,experiments]`. They use local files and one CUDA GPU by default.
+For one orchestration entry point covering
 all three benchmarks with saved gates, see [result reproduction](result-reproduction.md).
 
-The [prepared-data release](prepared-data.md#benchmark-data) is being staged
-separately from Git. When using a complete prepared package, skip the source
-download/preparation commands below and point the benchmark's data-root setting
-to that package. Compilation, Gate training and evaluation stay the same. No
-public data-download URL has been published yet.
+Prepare data with the commands below. If you have already prepared a benchmark,
+point its data-root setting to that directory and skip the download step.
 
 ## Local reader and encoder
 
@@ -25,9 +21,8 @@ export CTX_ENCODER_PATH="$PWD/models/ModernBERT-base"
 export CHECKPOINT="$PWD/outputs/compiler/pytorch_model.bin"
 ```
 
-Use a compiler from the Fixed-FKL training workflow. The existing checkpoint
-file can be loaded directly even if it predates the `rpmem` rename. Do not modify
-its contents or its old manifests just to move it to a new directory.
+Use a compiler from the Fixed-FKL training workflow in this repository.
+See [checkpoint setup](checkpoints.md) for the required format.
 
 The examples use SDPA (`--no-use-flash-attn`, with underscores in PERMA flags)
 so FlashAttention is not required. Use the same choice across stages when
@@ -83,23 +78,13 @@ held-out user, and use a fresh latent/output directory for exported checkpoints:
 export CHECKPOINT="$PWD/checkpoints/qwen3_8b/compiler.bin"
 GATE="$PWD/checkpoints/qwen3_8b/gates/perma/clean_sd/fold_user334/gate.pt"
 OUT="$PWD/outputs/perma/pretrained_clean_sd_user334"
-COMPILER_SHA=$(python - "$CHECKPOINT" <<'PY'
-import hashlib
-import sys
-with open(sys.argv[1], 'rb') as handle:
-    h = hashlib.sha256()
-    for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b''):
-        h.update(chunk)
-print(h.hexdigest())
-PY
-)
 python experiments/perma/precompute_phase2_latents.py \
-  --checkpoint "$CHECKPOINT" --checkpoint_sha256 "$COMPILER_SHA" \
+  --checkpoint "$CHECKPOINT" \
   --variant clean_sd --output_dir "$OUT/latents" \
   --base_model_path "$BASE_MODEL_PATH" --ctx_encoder_path "$CTX_ENCODER_PATH" \
   --no-use_flash_attn
 python experiments/perma/run_phase2_fusion.py \
-  --checkpoint "$CHECKPOINT" --checkpoint_sha256 "$COMPILER_SHA" \
+  --checkpoint "$CHECKPOINT" \
   --gate_checkpoint "$GATE" --variant clean_sd --test_user 334 \
   --method cmp_gate --emb_dir "$OUT/latents" --output_dir "$OUT/evaluation" \
   --base_model_path "$BASE_MODEL_PATH" --ctx_encoder_path "$CTX_ENCODER_PATH" \
@@ -107,9 +92,9 @@ python experiments/perma/run_phase2_fusion.py \
 ```
 
 Prepare `clean_sd` with the earlier data command first. The evaluation summary
-records `run_mode=evaluate_only`, the Gate file identity, zero training updates,
-and evaluation time. Loading another user's Gate, another variant's Gate, or a
-Gate for a different compiler is an error. This option accepts one fold per
+records `run_mode=evaluate_only`, zero training updates,
+and evaluation time. Use the Gate trained for this compiler, variant and user.
+This option accepts one fold per
 invocation; it does not overwrite the saved Gate.
 
 ## PersonaMem-v2 and PrefEval
@@ -134,44 +119,34 @@ else
   echo "Choose personamem_v2 or prefeval"
 fi
 
-COMPILER_SHA=$(python - "$CHECKPOINT" <<'PY'
-import hashlib
-import sys
-h = hashlib.sha256()
-with open(sys.argv[1], 'rb') as handle:
-    for chunk in iter(lambda: handle.read(8 * 1024 * 1024), b''):
-        h.update(chunk)
-print(h.hexdigest())
-PY
-)
-
 python "experiments/$BENCHMARK/precompute_phase2_latents.py" \
-  --checkpoint "$CHECKPOINT" --checkpoint-sha256 "$COMPILER_SHA" \
+  --checkpoint "$CHECKPOINT" \
   --base-model-path "$BASE_MODEL_PATH" --ctx-encoder-path "$CTX_ENCODER_PATH" \
   --data-root "$DATA" --output-dir "$OUT/latents" --no-use-flash-attn
 
 python "experiments/$BENCHMARK/train_cmp_gate.py" \
-  --checkpoint "$CHECKPOINT" --checkpoint-sha256 "$COMPILER_SHA" \
+  --checkpoint "$CHECKPOINT" \
   --base-model-path "$BASE_MODEL_PATH" --ctx-encoder-path "$CTX_ENCODER_PATH" \
   --data-root "$DATA" --latent-root "$OUT/latents" \
-  --output-dir "$OUT/gate" --resume --no-use-flash-attn
+  --output-dir "$OUT/gate" --no-use-flash-attn
 
 python "experiments/$BENCHMARK/run_eval.py" \
-  --method rpmem --checkpoint "$CHECKPOINT" --checkpoint-sha256 "$COMPILER_SHA" \
+  --method rpmem --checkpoint "$CHECKPOINT" \
   --base-model-path "$BASE_MODEL_PATH" --ctx-encoder-path "$CTX_ENCODER_PATH" \
   --data-root "$DATA" "$LATENT_FLAG" "$OUT/latents" --gate "$OUT/gate/gate.pt" \
   --output "$OUT/results.jsonl" --skip-completed --no-use-flash-attn
 ```
 
-The digest here connects the local compiler, latent cache, and trained Gate; it is
-not a remote code-version check. Do not mix caches generated by different
-compilers. Dataset construction keeps the existing frozen split policies.
+No checkpoint hash or completion certificate is required. Use the same compiler
+and dataset throughout the workflow. Compilation recomputes latents by default;
+pass `--resume` only to continue an interrupted compilation with unchanged inputs.
+Use a new output directory after changing a model, dataset, or segmentation setting.
 
 To evaluate a prepared PersonaMem-v2 or PrefEval Gate, run the compilation and
 evaluation commands above but skip `train_cmp_gate.py`. In the evaluation command,
 replace `--gate "$OUT/gate/gate.pt"` with
 `--gate "$PWD/checkpoints/qwen3_8b/gates/$BENCHMARK/gate.pt"`, and set `CHECKPOINT`
-to its paired compiler before computing `COMPILER_SHA`. Use a new `OUT` directory
+to its paired compiler. Use a new `OUT` directory
 instead of overwriting historical experiment results.
 
 `results.jsonl` contains question-level predictions. `results.jsonl.meta.json`
@@ -194,8 +169,8 @@ the same choice as `FIRST_SESSION_RULE=gate_zero_state`.
 
 Evaluation-only commands restore the saved gate's rule; old checkpoints without
 this field use `gate_zero_state`. New checkpoints, result metadata, and resume
-contracts record the rule. Resume rejects a different rule, and evaluation
-cache reuse is tied to the saved Gate identity (and PERMA's explicit rule).
+settings record the rule. Resume rejects a different rule. Reuse results with
+`--skip-completed` only when inputs and settings are unchanged.
 Use separate output directories for comparisons. Single-session examples bypass
 Gate optimization under `direct`, with separate skip/update counts.
 

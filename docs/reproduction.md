@@ -1,31 +1,28 @@
 # Reproducing the main method
 
-This repository provides the method's data, training, and evaluation entry
-points. Data will be distributed separately from Git: the planned release
-includes the processed corpus, its main-method Qwen3-8B teacher cache, and
-benchmark inputs/splits where redistribution is permitted. It is not yet
-published; see [data scope and status](prepared-data.md). Trained weights,
-company job launchers and historical baseline sweeps are not bundled. See
-[benchmark preparation](../experiments/README.md) for public data sources.
+This guide covers compiler training, consolidation, and decoder-head transfer.
+Start with [data preparation](data.md) and install `.[train,experiments]`.
+
+## Reproducibility scope
+
+This repository contains the main-method code. Data, trained weights, recorded
+predictions, and baseline sweeps are not bundled. The commands use locally
+prepared inputs; regenerating probes and retraining can produce different scores.
 
 ## Session compiler
 
 The main reader is Qwen3-8B, with ModernBERT-base as the frozen context encoder.
-`configs/compiler/qwen3_8b.yaml` specifies the Fixed-FKL compiler. The internal
-objective identifier remains `offline_fkl`; it is not an additional method.
+`configs/compiler/qwen3_8b.yaml` specifies the Fixed-FKL compiler, configured
+with `objective: offline_fkl`.
 
 The paper run uses 664128 training sessions, five passes, global batch 64,
 and 51885 optimizer steps. With eight GPUs, batch size 1 per GPU and gradient
 accumulation 8 give that batch size. Changing GPU count without adjusting
 accumulation changes the training schedule.
 
-Start from the [prepared corpus](prepared-data.md), with `CORPUS_ROOT` pointing
-to its extracted directory. Its Hugging Face publication is still pending.
-The split manifest is a supported input, not a file you need to convert to JSONL.
-The intended standard path uses the matching prepared teacher cache, so users
-need not regenerate probabilities. The full portable training and validation
-caches have been privately packaged and load-checked; public distribution is
-still pending. With a completed portable cache, set `TEACHER_ROOT` to its
+Set `CORPUS_ROOT` to the corpus produced by [data preparation](data.md).
+The split manifest is a supported input; no conversion to JSONL is needed.
+If you already have matching teacher targets, set `TEACHER_ROOT` to their
 root (containing `train/`) and run:
 
 ```bash
@@ -38,18 +35,15 @@ accelerate launch --config_file configs/accelerate_8gpu.yaml -m rpmem.training.t
 Optional held-out validation additionally supplies
 `--val_data "$CORPUS_ROOT/validation.corpus.json"` and
 `--val_teacher_logprobs_dir "$TEACHER_ROOT/validation"`. Do not substitute the
-query-validation split for that cache. See [cache export](prepared-data.md#main-method-teacher-cache)
-for moving recorded historical assets into the portable layout.
+query-validation split for that cache.
 
-The following **rebuild path** instead generates teacher targets and trains with
-the same split; it is useful for custom data/models or when the cache is absent:
+Otherwise, generate teacher targets and train with the same split:
 
 ```bash
 python -m rpmem.training.precompute_teacher \
   --base_model_path Qwen/Qwen3-8B --train_data "$CORPUS_ROOT/train.corpus.json" \
   --output_dir outputs/teacher --top_k 32 --max_seq_len 640 \
   --max_teacher_ctx_tokens 4096 --max_teacher_seq_len 4864 --no-use_flash_attn
-python -m rpmem.training.validate_teacher_store outputs/teacher --write-marker
 accelerate launch --config_file configs/accelerate_8gpu.yaml -m rpmem.training.train_hypernet \
   --config configs/compiler/qwen3_8b.yaml --train_data "$CORPUS_ROOT/train.corpus.json" \
   --teacher_logprobs_dir outputs/teacher --output_dir outputs/compiler \
@@ -60,11 +54,15 @@ Teacher preparation and training must use the same sample ordering. The step
 count above only represents five passes for the stated corpus size. A small
 custom dataset is useful for a functional test, but is not that paper run.
 Teacher preparation accepts `--num_shards` and `--shard_id` for independent GPU
-workers writing the same output directory. Wait for every shard before running
-the teacher-store validator or starting training. The command above uses a
+workers writing the same output directory. Wait for every shard before starting
+training. No completion marker is required: training reads the actual cache and
+checks sample coverage and token dimensions. The command above uses a
 single teacher worker for clarity; it is not the fastest full-corpus setup.
 `--no-use_flash_attn` provides a portable SDPA path; it is not a throughput claim
 for the paper's hardware or attention implementation.
+
+The standalone `rpmem.training.validate_teacher_store` command is an optional
+diagnostic, not a required training step.
 
 ## Consolidation and held-out evaluation
 
@@ -107,3 +105,13 @@ compiler checkpoint explicitly. The trainable scope is `head_only`: the latent
 Perceiver is transferred while the target head is trained. Run the same compiler
 training CLI with the target config; downstream gates are trained/evaluated with
 that target compiler. Inspect `--help` for transfer arguments and local paths.
+
+### From-scratch controls
+
+`configs/scratch/` contains the corresponding four from-scratch compiler
+configurations. These initialize both the Perceiver and LoRA decoder randomly
+(`trainable_scope: perceiver_and_head`); they do not retrain the frozen reader
+or context encoder. Use the same training CLI, target-backbone teacher targets,
+and corpus as for the corresponding transfer experiment, but omit
+`--perceiver_init_checkpoint` and `--from_checkpoint`. Use separate output
+directories for transfer and scratch runs.

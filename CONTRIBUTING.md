@@ -1,9 +1,9 @@
 # Contributing to RPMem
 
 This repository contains the paper's method library, main-method training and
-evaluation workflows, and project page. Please keep changes scoped to these
-components. Internal cluster launchers, private storage integrations, baseline
-sweeps, and plotting pipelines are maintained separately.
+evaluation workflows. Please keep changes scoped to these
+components. Baseline sweeps and plotting pipelines are outside this release's
+scope.
 
 ## Development
 
@@ -26,9 +26,8 @@ session segmentation, token budgets, objectives, Gate initialization, LoRA scali
 or scoring protocols can invalidate old weights or results. Describe these changes
 explicitly and do not present previously measured scores as new validation.
 
-Keep checkpoint readers compatible with documented historical formats where
-possible. Never rewrite a user's existing checkpoint or result directory as part
-of migration.
+Never overwrite a user's existing checkpoint or result directory when changing
+file formats. Preserve upstream licenses and attribution.
 
 ## Reporting issues
 

@@ -6,9 +6,10 @@ table metrics. It neither trains gates nor reuses historical predictions.
 It is separate from [training from prepared data](reproduction.md).
 
 **Weights are not publicly released.** These commands work with locally supplied
-matching artifacts, including your own trained checkpoints. The authors use the
-same entry point for private verification. A completed functional smoke test is
-not evidence that this full benchmark workflow has passed on a GPU.
+matching artifacts, including your own trained checkpoints. They generate new
+predictions; the bundled reference scores do not replace measured outputs.
+See [reproducibility scope](reproduction.md#reproducibility-scope) for the
+required inputs.
 
 ## Inputs
 
@@ -30,8 +31,8 @@ checkpoints/qwen3_8b/
 
 PERMA has 70 gates (seven variants x ten held-out users); the other benchmarks
 have one each. The gate metadata must identify the paired compiler and training
-split. [Export instructions](checkpoints.md) explain how to relocate historical
-artifacts without changing tensors. Never pair a gate with another compiler
+split. See [checkpoint setup](checkpoints.md) for file formats and model paths.
+Never pair a gate with another compiler
 just because their architectures match.
 
 ## Run

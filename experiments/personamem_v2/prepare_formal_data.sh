@@ -8,7 +8,7 @@ PYTHON_BIN=${PYTHON_BIN:-python}
 PERSONAMEM_DATA_ROOT=${PERSONAMEM_DATA_ROOT:-$REPO_ROOT/data/personamem_v2/formal_v1}
 PERSONAMEM_DOWNLOAD_WORKERS=${PERSONAMEM_DOWNLOAD_WORKERS:-16}
 export HF_ENDPOINT=${HF_ENDPOINT:-https://huggingface.co}
-export HF_HOME=${HF_HOME:-/tmp/memlora_huggingface}
+export HF_HOME=${HF_HOME:-/tmp/rpmem_huggingface}
 
 "$PYTHON_BIN" experiments/personamem_v2/download_source.py \
   --output-root "$PERSONAMEM_DATA_ROOT" \

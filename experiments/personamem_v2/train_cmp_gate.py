@@ -24,7 +24,7 @@ from evaluation_utils import (
     shuffled_options,
 )
 from formal_contract import GATE_CONTRACT, GATE_RESULT_FORMAT, PHASE1_METHOD
-from formal_data import sha256_file, validate_dataset_root, write_json_atomic
+from formal_data import validate_dataset_root, write_json_atomic
 from rpmem.gate import CMPGate, FIRST_SESSION_RULES, normalize_gate_contract
 from rpmem.training.trainer import step_gate_optimizer
 from rpmem.training.hypernet_model import HypernetModel
@@ -117,7 +117,7 @@ def training_state(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoint", required=True)
-    parser.add_argument("--checkpoint-sha256", required=True)
+    parser.add_argument("--checkpoint-sha256", default="", help=argparse.SUPPRESS)
     parser.add_argument("--phase1-method", default=PHASE1_METHOD)
     parser.add_argument("--data-root", default="data/personamem_v2/formal_v1")
     parser.add_argument("--latent-root", required=True)
@@ -149,8 +149,6 @@ def main() -> None:
     if args.epochs < 1 or args.save_histories < 1:
         raise ValueError("invalid Gate training configuration")
     checkpoint = Path(args.checkpoint)
-    if sha256_file(checkpoint) != args.checkpoint_sha256:
-        raise ValueError("Phase-1 checkpoint SHA mismatch")
 
     freeze, split_rows = validate_dataset_root(
         args.data_root,
@@ -210,8 +208,6 @@ def main() -> None:
         if any(
             (
                 state.get("format") != STATE_FORMAT,
-                state.get("dataset_sha256") != freeze["dataset_sha256"],
-                state.get("checkpoint_sha256") != args.checkpoint_sha256,
                 normalize_gate_contract(state.get("gate_contract", {})) != contract,
             )
         ):

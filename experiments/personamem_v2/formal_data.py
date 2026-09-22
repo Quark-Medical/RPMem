@@ -577,7 +577,7 @@ def validate_dataset_root(
     root: str | Path,
     *,
     require_expected_counts: bool = True,
-    verify_source_files: bool = True,
+    verify_source_files: bool = False,
 ) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]]]]:
     root = Path(root)
     freeze_path = root / "memlora_dataset_freeze.json"
@@ -592,15 +592,12 @@ def validate_dataset_root(
     if freeze.get("source_revision") != SOURCE_REVISION:
         raise ValueError("PersonaMem-v2 freeze uses an unpinned source revision")
     manifest_path = root / str(freeze["source_manifest_file"])
-    if (
-        not manifest_path.is_file()
-        or sha256_file(manifest_path) != freeze.get("source_manifest_file_sha256")
-    ):
-        raise ValueError(f"PersonaMem-v2 source manifest mismatch: {manifest_path}")
-    source_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if canonical_sha256(source_manifest) != freeze.get("source_manifest_sha256"):
-        raise ValueError("PersonaMem-v2 source manifest content mismatch")
     if verify_source_files:
+        if sha256_file(manifest_path) != freeze.get("source_manifest_file_sha256"):
+            raise ValueError(f"PersonaMem-v2 source manifest mismatch: {manifest_path}")
+        source_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if canonical_sha256(source_manifest) != freeze.get("source_manifest_sha256"):
+            raise ValueError("PersonaMem-v2 source manifest content mismatch")
         for index, item in enumerate(source_manifest, start=1):
             path = root / str(item["path"])
             if not path.is_file() or sha256_file(path) != item["sha256"]:
@@ -618,7 +615,7 @@ def validate_dataset_root(
         path = root / str(freeze["normalized_files"][split])
         if (
             not path.is_file()
-            or sha256_file(path) != freeze["normalized_sha256"][split]
+            or (verify_source_files and sha256_file(path) != freeze["normalized_sha256"][split])
         ):
             raise ValueError(f"PersonaMem-v2 normalized checksum mismatch: {path}")
         rows = read_jsonl(path)

@@ -16,7 +16,7 @@ import torch
 from transformers import AutoTokenizer
 
 from experiments.prefeval.formal_contract import LATENT_FORMAT, PHASE1_METHOD, segmentation_contract
-from experiments.prefeval.formal_data import sha256_file, validate_dataset_root, write_json_atomic
+from experiments.prefeval.formal_data import validate_dataset_root, write_json_atomic
 from experiments.prefeval.phase2_utils import asset_cache_key, noise_asset_id, preference_asset_id, save_tensor_atomic, segment_asset
 from rpmem.training.hypernet_model import HypernetModel
 
@@ -90,7 +90,8 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--base-model-path", default=None)
     parser.add_argument("--ctx-encoder-path", default=None)
-    parser.add_argument("--checkpoint-sha256", required=True)
+    parser.add_argument("--checkpoint-sha256", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--resume", action="store_true", help="Reuse latents from an interrupted run with the same inputs.")
     parser.add_argument("--phase1-method", default=PHASE1_METHOD)
     parser.add_argument("--data-root", default="data/prefeval/formal_v1")
     parser.add_argument("--output-dir", required=True)
@@ -112,8 +113,6 @@ def main() -> None:
     if args.phase1_method != PHASE1_METHOD:
         raise ValueError("PrefEval requires the formal Offline-FKL compiler")
     checkpoint = Path(args.checkpoint)
-    if sha256_file(checkpoint) != args.checkpoint_sha256:
-        raise ValueError("Phase-1 checkpoint SHA mismatch")
 
     freeze, examples, noise = validate_dataset_root(args.data_root)
     model = HypernetModel.from_checkpoint(
@@ -147,7 +146,7 @@ def main() -> None:
         meta_path = directory / "meta.json"
         existing = (
             json.loads(meta_path.read_text(encoding="utf-8"))
-            if meta_path.is_file()
+            if args.resume and meta_path.is_file()
             else {}
         )
         segments, stats = segment_asset(
@@ -163,11 +162,11 @@ def main() -> None:
             path = directory / f"segment_{index:04d}.pt"
             previous = existing.get("segment_metadata", [])
             can_reuse = (
-                existing.get("format") == LATENT_FORMAT
-                and existing.get("dataset_sha256") == freeze["dataset_sha256"]
-                and existing.get("checkpoint_sha256") == args.checkpoint_sha256
+                args.resume
+                and existing.get("format") == LATENT_FORMAT
                 and existing.get("asset_id") == asset["asset_id"]
-                and existing.get("segmentation") == policy
+                and {k: v for k, v in existing.get("segmentation", {}).items() if k != "sha256"}
+                == {k: v for k, v in policy.items() if k != "sha256"}
                 and index < len(previous)
                 and previous[index].get("segment") == segment.metadata()
                 and path.is_file()

@@ -81,7 +81,7 @@ the gate using tiny random modules. A successful run prints
 > **Data and checkpoints:** Prepared datasets and teacher targets are not released
 > yet; trained compiler and gate checkpoints are not included. Data-preparation
 > code is provided. For the workflows below, supply your own prepared inputs and
-> matching checkpoints. See [data availability](docs/prepared-data.md).
+> matching checkpoints. See [data preparation](docs/data.md).
 
 ## Usage
 
@@ -110,7 +110,7 @@ model.reset()  # Remove the injected memory before serving another user.
 
 The memory tensor is explicit: keep one state per user and pass it into the next
 update. See [API usage](docs/usage.md) for saving state and session token budgets,
-and [checkpoint setup](docs/weights.md) for compatible compiler/gate pairs.
+and [checkpoint setup](docs/checkpoints.md) for compatible compiler/gate pairs.
 
 ## Training and Evaluation
 
@@ -123,7 +123,7 @@ python -m pip install -e '.[train,experiments]'
 ### Stage 1: Train the session compiler
 
 Prepare the session/probe corpus and matching teacher targets using the
-[data guide](docs/prepared-data.md). The following uses the Qwen3-8B configuration
+[data guide](docs/data.md). The following uses the Qwen3-8B configuration
 with eight GPUs; `CORPUS_ROOT` and `TEACHER_ROOT` point to your local inputs.
 
 ```bash
@@ -161,7 +161,7 @@ and PrefEval use their own train/test splits. Follow the guides for the full run
 <details>
 <summary><strong>Reproducing the paper's first-session initialization</strong></summary>
 
-The paper results above used `h1 = gate(0, q1)` (`gate_zero_state`), as selected
+The paper results used `h1 = gate(0, q1)` (`gate_zero_state`), as selected
 in the training command. New gates default to `h1 = q1` (`direct`); saved gates
 automatically restore their recorded convention. These are different training
 configurations. See [initialization compatibility](docs/usage.md#first-session-initialization)

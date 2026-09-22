@@ -4,7 +4,7 @@ Run from the repository root after `pip install -e '.[train,experiments]'`.
 Training and pretrained evaluation require CUDA. Supply data and checkpoints
 locally; no datasets, weights, or recorded results are bundled.
 See [complete commands](../docs/benchmarks.md) to run data preparation,
-compilation, Gate training, and evaluation without the original cluster paths.
+compilation, Gate training, and evaluation using local paths.
 
 | Benchmark | Data preparation | Session compilation | Gate training | RPMem evaluation |
 | --- | --- | --- | --- | --- |
@@ -13,8 +13,8 @@ compilation, Gate training, and evaluation without the original cluster paths.
 | PrefEval | `prefeval/prepare_formal_data.sh` | `prefeval/precompute_phase2_latents.py` | `prefeval/train_cmp_gate.py` | `prefeval/run_eval.py --method rpmem` |
 
 Prefix paths with `experiments/`. Run each Python entry with `--help` for its
-required paths and arguments. Keep dataset hashes, checkpoint hashes, latent
-caches, and train/test splits consistent across stages. PERMA uses held-out
+required paths and arguments. Use the same compiler, dataset, latent
+caches, and train/test splits across stages. PERMA uses held-out
 users; PersonaMem-v2 and PrefEval use their respective predefined splits.
 `scripts/run_perma.sh` chains compilation, Gate training, and held-out evaluation
 for one PERMA fold using a locally trained compiler.
@@ -33,6 +33,5 @@ paths, then use the following modules in order (each accepts `--help`):
 
 The [reproduction guide](../docs/reproduction.md) gives teacher preparation and Fixed-FKL training commands.
 Compiler and decoder-transfer configurations are in `configs/`.
-Shared training-library utilities retain their original interfaces.
 Optional API-based probe generation requires caller-supplied endpoints and credentials.
-Training and evaluation write local artifacts; no OSS tools or company platform are required.
+Training and evaluation write local artifacts.

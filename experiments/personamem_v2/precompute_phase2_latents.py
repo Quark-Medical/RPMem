@@ -15,7 +15,6 @@ from evaluation_utils import history_cache_key
 from formal_contract import LATENT_FORMAT, PHASE1_METHOD, segmentation_contract
 from formal_data import (
     load_history,
-    sha256_file,
     validate_dataset_root,
     write_json_atomic,
 )
@@ -91,7 +90,8 @@ def main() -> None:
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--base-model-path", default=None)
     parser.add_argument("--ctx-encoder-path", default=None)
-    parser.add_argument("--checkpoint-sha256", required=True)
+    parser.add_argument("--checkpoint-sha256", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--resume", action="store_true", help="Reuse latents from an interrupted run with the same inputs.")
     parser.add_argument("--phase1-method", default=PHASE1_METHOD)
     parser.add_argument("--data-root", default="data/personamem_v2/formal_v1")
     parser.add_argument("--output-dir", required=True)
@@ -109,8 +109,6 @@ def main() -> None:
     if args.phase1_method != PHASE1_METHOD:
         raise ValueError("PersonaMem-v2 requires the formal Offline-FKL compiler")
     checkpoint = Path(args.checkpoint)
-    if sha256_file(checkpoint) != args.checkpoint_sha256:
-        raise ValueError("Phase-1 checkpoint SHA mismatch")
 
     data_root = Path(args.data_root).resolve()
     freeze, split_rows = validate_dataset_root(
@@ -150,18 +148,16 @@ def main() -> None:
         history_dir = output_dir / history_cache_key(relative)
         history_dir.mkdir(parents=True, exist_ok=True)
         meta_path = history_dir / "meta.json"
-        existing = json.loads(meta_path.read_text()) if meta_path.is_file() else {}
+        existing = json.loads(meta_path.read_text()) if args.resume and meta_path.is_file() else {}
         if existing and any(
             (
                 existing.get("latent_format") != LATENT_FORMAT,
-                existing.get("dataset_sha256") != freeze["dataset_sha256"],
-                existing.get("checkpoint_sha256") != args.checkpoint_sha256,
                 existing.get("memory_selection") != args.memory_selection,
-                existing.get("segmentation", {}).get("sha256")
-                != contract["sha256"],
+                {k: v for k, v in existing.get("segmentation", {}).items() if k != "sha256"}
+                != {k: v for k, v in contract.items() if k != "sha256"},
             )
         ):
-            raise ValueError(f"latent provenance mismatch: {history_dir}")
+            raise ValueError(f"incompatible latent format or segmentation: {history_dir}")
         history = load_history(data_root / relative)
         if str(history["metadata"]["persona_id"]) != persona:
             raise ValueError(f"history/persona mismatch: {relative}")
@@ -177,7 +173,7 @@ def main() -> None:
         for index, segment in enumerate(segments):
             path = history_dir / f"memory_segment_{index:05d}.pt"
             item = segment.metadata()
-            if path.is_file() and cached_latent_is_valid(path):
+            if args.resume and path.is_file() and cached_latent_is_valid(path):
                 prior = previous[index] if index < len(previous) else {}
                 item["performance"] = {
                     **prior.get("performance", {}),

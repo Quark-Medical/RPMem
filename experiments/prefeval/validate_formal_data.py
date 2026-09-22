@@ -12,7 +12,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", default="data/prefeval/formal_v1")
     args = parser.parse_args()
-    freeze, examples, noise = validate_dataset_root(Path(args.data_root))
+    freeze, examples, noise = validate_dataset_root(Path(args.data_root), verify_source_files=True)
     print(
         "formal_prefeval_data_ready:"
         f" sha256={freeze['dataset_sha256']} examples={len(examples)}"

@@ -29,4 +29,3 @@ Paper = "https://arxiv.org/abs/2609.23466"
 
 [tool.setuptools.packages.find]
 include = ["rpmem", "rpmem.*"]
-exclude = ["tests", "examples"]

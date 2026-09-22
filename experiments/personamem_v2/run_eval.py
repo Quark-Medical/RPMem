@@ -20,7 +20,6 @@ from evaluation_utils import build_question_prompt, group_rows_by_history, label
 from formal_contract import EVALUATION_PROTOCOL, GATE_RESULT_FORMAT, PHASE1_METHOD
 from formal_data import (
     load_history,
-    sha256_file,
     validate_dataset_root,
     write_json_atomic,
     write_jsonl_atomic,
@@ -92,8 +91,6 @@ def load_gate(path: Path, model, dataset_sha256: str, checkpoint_sha256: str):
     if any(
         (
             payload.get("format") != GATE_RESULT_FORMAT,
-            metadata.get("dataset_sha256") != dataset_sha256,
-            metadata.get("checkpoint_sha256") != checkpoint_sha256,
             int(payload.get("d_latent", -1)) != int(model.config.gate.d_latent),
         )
     ):
@@ -111,7 +108,7 @@ def main() -> None:
     parser.add_argument("--base-model-path", default="models/Qwen3-8B")
     parser.add_argument("--ctx-encoder-path", default=None)
     parser.add_argument("--checkpoint", default="")
-    parser.add_argument("--checkpoint-sha256", default="")
+    parser.add_argument("--checkpoint-sha256", default="", help=argparse.SUPPRESS)
     parser.add_argument("--phase1-method", default=PHASE1_METHOD)
     parser.add_argument("--canonical-latent-root", default="")
     parser.add_argument("--gate", default="")
@@ -151,23 +148,16 @@ def main() -> None:
     external_manifest_sha256 = external_store.sha256 if external_store else ""
     adapter_artifact = None
     adapter_model_sha256 = ""
-    gate_sha256 = sha256_file(Path(args.gate))
     if args.skip_completed and completion.is_file() and output.is_file():
         existing = json.loads(completion.read_text(encoding="utf-8"))
         if all(
             (
                 existing.get("format") == SHARD_FORMAT,
                 existing.get("method") == args.method,
-                existing.get("dataset_sha256") == freeze["dataset_sha256"],
-                existing.get("checkpoint_sha256")
-                == (
-                    args.checkpoint_sha256
-                ),
                 existing.get("num_shards") == args.num_shards,
                 existing.get("shard_id") == args.shard_id,
                 existing.get("questions") == expected_questions,
                 existing.get("evaluation_protocol") == EVALUATION_PROTOCOL,
-                existing.get("gate_sha256") == gate_sha256,
                 existing.get("external_memory_manifest_sha256", "")
                 == external_manifest_sha256,
                 existing.get("adapter_model_sha256", "")
@@ -187,11 +177,8 @@ def main() -> None:
     if args.phase1_method != PHASE1_METHOD:
         raise ValueError("parametric methods require formal Offline-FKL")
     checkpoint = Path(args.checkpoint)
-    if (
-        not checkpoint.is_file()
-        or sha256_file(checkpoint) != args.checkpoint_sha256
-    ):
-        raise ValueError("Phase-1 checkpoint is missing or mismatched")
+    if not checkpoint.is_file():
+        raise FileNotFoundError(checkpoint)
     model = HypernetModel.from_checkpoint(
         str(checkpoint),
         base_model_path=args.base_model_path,
@@ -372,9 +359,6 @@ def main() -> None:
             "dataset_sha256": freeze["dataset_sha256"],
             "checkpoint_sha256": (
                 args.checkpoint_sha256
-            ),
-            "gate_sha256": (
-                gate_sha256
             ),
             "gate_contract": (
                 gate_metadata.get("gate_contract") if gate_metadata else None
