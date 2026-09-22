@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RPMem compiles sessions into latent memory, consolidates them recurrently, and decodes memory into backbone-specific LoRA parameters.">
+  <meta property="og:title" content="RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents">
+  <meta property="og:description" content="Session compilation, recurrent memory consolidation, and backbone-specific decoding.">
+  <meta property="og:type" content="article">
+  <title>RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents</title>
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/rpmem.css?v=a20dd12939fd">
+  <script src="static/js/results.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#overview">Skip to overview</a>
+  <main>
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop has-text-centered">
+          <h1 class="title publication-title">RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents</h1>
+          <div class="publication-authors">
+            <span class="author-block">Fanyu Zhao<sup>1,2,*</sup>,</span>
+            <span class="author-block">Ruike Cao<sup>2,*</sup>,</span>
+            <span class="author-block">Liang Dong<sup>2,&dagger;</sup>,</span>
+            <span class="author-block">Fugen Yao<sup>2</sup>,</span>
+            <span class="author-block">Jian Xu<sup>2</sup>,</span>
+            <span class="author-block">Guanjun Jiang<sup>2</sup>,</span>
+            <span class="author-block">Han Zhang<sup>1</sup>,</span>
+            <span class="author-block">Yifei Zhao<sup>1</sup>,</span>
+            <span class="author-block">Yinsheng Li<sup>1,&dagger;</sup></span>
+          </div>
+          <p class="affiliations"><sup>1</sup> Fudan University<br><sup>2</sup> Qwen Business Unit of Alibaba</p>
+          <p class="author-notes">* Equal contribution. &dagger; Corresponding authors.</p>
+          <div class="publication-links">
+            <a class="button is-dark" href="https://arxiv.org/abs/2609.23466">Paper</a>
+            <a class="button is-outlined" href="https://arxiv.org/pdf/2609.23466">PDF</a>
+            <a class="button is-dark" href="https://github.com/Quark-Medical/rpmem">Code</a>
+            <a class="button is-outlined" href="#overview">Method</a>
+            <a class="button is-outlined" href="#results">Results</a>
+            <a class="button is-outlined" href="#analysis">Analysis</a>
+            <a class="button is-outlined" href="#citation">Cite</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section teaser" id="overview">
+      <div class="container is-max-desktop">
+        <figure>
+          <a href="static/images/method.png" title="Open the full-resolution method figure">
+            <img src="static/images/method.png" alt="RPMem architecture: single-session memory compilation, cross-session consolidation, and deployment with a backbone-specific decoder." width="2200" height="908" fetchpriority="high">
+          </a>
+          <figcaption>A session compiler creates latent memory. A recurrent gate consolidates it across sessions. A model-specific decoder turns retained memory into LoRA parameters for the reader.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section abstract-band">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column is-four-fifths content">
+            <h2 class="title is-3 has-text-centered">Memory across sessions</h2>
+            <p>Long-running LLM agents need memory that persists and evolves. Text-based memory retrieves and reconstructs past interactions at each query. RPMem instead compiles session information into model computation through low-rank adaptation.</p>
+            <p>The architecture separates session encoding, recurrent consolidation, and backbone-specific decoding. A frozen context encoder and a trainable Perceiver compile each bounded session into fixed-shape latent memory. A task-trained gate integrates new sessions with retained memory, and a decoder maps the consolidated state to LoRA parameters.</p>
+            <p>This separation supports decoder-head adaptation when the backbone changes. The paper studies long-term memory on PERMA, PersonaMem-v2, and PrefEval, alongside cross-backbone transfer and memory dynamics.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop content method-details">
+        <h2 class="title is-3 has-text-centered">Two stages, one persistent memory</h2>
+        <div class="columns">
+          <div class="column">
+            <h3>Session compilation</h3>
+            <p>The compiler learns from a history-aware teacher using a fixed-reference forward-KL objective. The reader and context encoder stay frozen while the Perceiver and LoRA decoder are trained.</p>
+          </div>
+          <div class="column">
+            <h3>Recurrent consolidation</h3>
+            <p>Downstream supervision trains a lightweight gate to retain and update session memory. At deployment, bounded sessions update a fixed-size state without reprocessing the entire history.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section results-band" id="results">
+      <div class="container is-max-desktop">
+        <div class="content results-intro">
+          <h2 class="title is-3 has-text-centered">Cross-session memory performance</h2>
+          <p>RPMem achieves the strongest non-oracle aggregate results on PERMA and PersonaMem-v2. On PrefEval, LightMem leads at shorter intervals; RPMem leads at 300 intervening turns.</p>
+          <p class="protocol-note">Accuracy (%), as reported in the paper. Qwen3-8B with thinking disabled for RPMem and baseline implementations, except the released Metis-9B model. Bold values mark the best non-oracle result in each column; Gold State is an oracle reference. Shading identifies RPMem.</p>
+        </div>
+        <div class="result-tabs" role="tablist" aria-label="Benchmark results" hidden>
+          <button type="button" id="tab-perma" role="tab" aria-controls="result-perma" aria-selected="true" tabindex="0">PERMA</button>
+          <button type="button" id="tab-personamem" role="tab" aria-controls="result-personamem" aria-selected="false" tabindex="-1">PersonaMem-v2</button>
+          <button type="button" id="tab-prefeval" role="tab" aria-controls="result-prefeval" aria-selected="false" tabindex="-1">PrefEval</button>
+        </div>
+        <section class="result-panel" id="result-perma" aria-labelledby="heading-perma">
+          <h3 id="heading-perma">PERMA</h3>
+          <div class="table-scroll" role="region" aria-label="PERMA results" tabindex="0">
+            <table class="results-table perma-table">
+              <caption>Ten-fold leave-one-user-out evaluation. Core averages the four clean/noisy single-domain and multi-domain settings.</caption>
+              <thead><tr><th scope="col">Method</th><th scope="col">SD-C</th><th scope="col">SD-N</th><th scope="col">MD-C</th><th scope="col">MD-N</th><th scope="col">Core</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">No Context</th><td>66.73</td><td>66.73</td><td>54.60</td><td>54.60</td><td>60.66</td></tr>
+                <tr class="oracle-row"><th scope="row">Gold State <span>(oracle)</span></th><td>72.70</td><td>72.23</td><td>66.06</td><td>65.47</td><td>69.12</td></tr>
+                <tr class="group-start"><th scope="row">Rolling Summary</th><td>39.57</td><td>40.27</td><td>23.34</td><td>27.41</td><td>32.65</td></tr>
+                <tr><th scope="row">LightMem</th><td>56.63</td><td>56.20</td><td>40.72</td><td>40.20</td><td>48.44</td></tr>
+                <tr><th scope="row">Mem0</th><td>57.57</td><td>58.57</td><td>41.03</td><td>42.10</td><td>49.82</td></tr>
+                <tr><th scope="row">RAG (BGE-M3)</th><td>63.00</td><td>62.53</td><td>49.16</td><td>47.46</td><td>55.54</td></tr>
+                <tr><th scope="row">Full Context</th><td>76.47</td><td>73.03</td><td>70.72</td><td>69.95</td><td>72.54</td></tr>
+                <tr class="group-start"><th scope="row">SFT</th><td>78.00</td><td>71.47</td><td>49.30</td><td>42.61</td><td>60.35</td></tr>
+                <tr><th scope="row">Metis-9B</th><td>80.87</td><td>80.47</td><td><strong>80.17</strong></td><td>79.29</td><td>80.20</td></tr>
+                <tr class="rpmem-row"><th scope="row">RPMem (ours)</th><td><strong>90.57</strong></td><td><strong>91.20</strong></td><td>79.67</td><td><strong>80.62</strong></td><td><strong>85.52</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="result-panel" id="result-personamem" aria-labelledby="heading-personamem">
+          <h3 id="heading-personamem">PersonaMem-v2</h3>
+          <div class="table-scroll" role="region" aria-label="PersonaMem-v2 results" tabindex="0">
+            <table class="results-table">
+              <caption>Official train/test split. Overall, Self, and Current are reported separately.</caption>
+              <thead><tr><th scope="col">Method</th><th scope="col">Overall</th><th scope="col">Self</th><th scope="col">Current</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">No Context</th><td>25.74</td><td>25.28</td><td>25.42</td></tr>
+                <tr class="oracle-row"><th scope="row">Gold State <span>(oracle)</span></th><td>57.90</td><td>64.05</td><td>69.16</td></tr>
+                <tr class="group-start"><th scope="row">Rolling Summary</th><td>26.58</td><td>25.46</td><td>25.32</td></tr>
+                <tr><th scope="row">LightMem</th><td>30.46</td><td>31.42</td><td>34.51</td></tr>
+                <tr><th scope="row">Mem0</th><td>30.02</td><td>30.26</td><td>31.90</td></tr>
+                <tr><th scope="row">RAG (BGE-M3)</th><td>30.32</td><td>31.13</td><td>31.70</td></tr>
+                <tr><th scope="row">Full Context</th><td>31.10</td><td>32.72</td><td>33.97</td></tr>
+                <tr class="group-start"><th scope="row">SFT</th><td>31.64</td><td>33.65</td><td>35.47</td></tr>
+                <tr><th scope="row">Metis-9B</th><td>29.64</td><td>30.24</td><td>31.32</td></tr>
+                <tr class="rpmem-row"><th scope="row">RPMem (ours)</th><td><strong>40.22</strong></td><td><strong>43.61</strong></td><td><strong>47.28</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="result-panel" id="result-prefeval" aria-labelledby="heading-prefeval">
+          <h3 id="heading-prefeval">PrefEval</h3>
+          <div class="table-scroll" role="region" aria-label="PrefEval results" tabindex="0">
+            <table class="results-table">
+              <caption>Official split. Each history-length result averages explicit, implicit-choice, and implicit-persona forms.</caption>
+              <thead><tr><th scope="col">Method</th><th scope="col">10 turns</th><th scope="col">70 turns</th><th scope="col">300 turns</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">No Context</th><td>36.67</td><td>39.82</td><td>39.07</td></tr>
+                <tr class="oracle-row"><th scope="row">Gold State <span>(oracle)</span></th><td>80.18</td><td>80.74</td><td>80.00</td></tr>
+                <tr class="group-start"><th scope="row">Rolling Summary</th><td>44.26</td><td>45.19</td><td>45.19</td></tr>
+                <tr><th scope="row">LightMem</th><td><strong>81.30</strong></td><td><strong>79.07</strong></td><td>73.52</td></tr>
+                <tr><th scope="row">Mem0</th><td>73.15</td><td>65.19</td><td>61.67</td></tr>
+                <tr><th scope="row">RAG (BGE-M3)</th><td>59.26</td><td>54.63</td><td>50.74</td></tr>
+                <tr><th scope="row">Full Context</th><td>60.00</td><td>45.00</td><td>40.56</td></tr>
+                <tr class="group-start"><th scope="row">SFT</th><td>57.22</td><td>40.00</td><td>38.15</td></tr>
+                <tr><th scope="row">Metis-9B</th><td>43.89</td><td>39.07</td><td>39.82</td></tr>
+                <tr class="rpmem-row"><th scope="row">RPMem (ours)</th><td>69.81</td><td>72.41</td><td><strong>74.81</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop content">
+        <h2 class="title is-3 has-text-centered">Across language-model backbones</h2>
+        <p class="figure-intro">The paper evaluates five backbones across model families, scales, and dense and MoE architectures. RPMem consistently improves over matched No Context and Full Context references.</p>
+        <figure class="generalization-figure">
+          <a href="static/images/model-generalization.png" title="Open the full-resolution cross-model figure">
+            <img src="static/images/model-generalization.png" alt="PERMA accuracy across Qwen3-4B, Qwen3-8B, Ministral-3-8B, Qwen3.5-9B, and Qwen3.5-35B-A3B. RPMem exceeds both matched references on each backbone." width="2200" height="585" loading="lazy">
+          </a>
+          <figcaption>PERMA generalization: seven-variant averages at left; single-domain and multi-domain averages at right. These averages use a different scope from the four-setting Core column above.</figcaption>
+        </figure>
+      </div>
+    </section>
+    <section class="section analysis-band" id="analysis">
+      <div class="container is-max-desktop">
+        <div class="content figure-intro">
+          <h2 class="title is-3 has-text-centered">What makes memory work?</h2>
+          <p>Both training stages matter. Matching the context-conditioned distribution produces stronger session memories, while learned consolidation substantially outperforms fixed rules for combining them.</p>
+          <p class="protocol-note">PERMA accuracy (%). Core SD and Core MD average the clean and noisy settings; Core Avg. averages all four. Each ablation varies one stage while holding the other fixed.</p>
+        </div>
+        <div class="ablation-grid">
+          <section class="ablation-study" aria-labelledby="compilation-heading">
+            <h3 id="compilation-heading">Memory compilation</h3>
+            <div class="table-scroll" role="region" aria-label="Compilation objective ablation" tabindex="0">
+              <table class="results-table ablation-table">
+                <caption>The same learned gate protocol, with different compiler objectives.</caption>
+                <thead><tr><th scope="col">Objective</th><th scope="col">Core SD</th><th scope="col">Core MD</th><th scope="col">Core Avg.</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Compiler SFT</th><td>72.20</td><td>50.23</td><td>61.21</td></tr>
+                  <tr><th scope="row">Sampled RKL (top-K)</th><td>74.08</td><td>59.73</td><td>66.91</td></tr>
+                  <tr><th scope="row">Sampled RKL (K3)</th><td>70.82</td><td>63.22</td><td>67.02</td></tr>
+                  <tr><th scope="row">Top-K CE</th><td>82.99</td><td>72.34</td><td>77.66</td></tr>
+                  <tr><th scope="row">Sampled FKL</th><td>88.37</td><td>79.14</td><td>83.75</td></tr>
+                  <tr class="rpmem-row"><th scope="row">Fixed FKL</th><td><strong>90.89</strong></td><td><strong>80.15</strong></td><td><strong>85.52</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="study-takeaway">Fixed FKL improves over Top-K CE by <strong>7.86 percentage points</strong>, supporting distributional matching beyond selected-token probabilities.</p>
+          </section>
+          <section class="ablation-study" aria-labelledby="consolidation-heading">
+            <h3 id="consolidation-heading">Cross-session consolidation</h3>
+            <div class="table-scroll" role="region" aria-label="Consolidation rule ablation" tabindex="0">
+              <table class="results-table ablation-table">
+                <caption>The same Fixed-FKL compiler, with different memory-combination rules.</caption>
+                <thead><tr><th scope="col">Rule</th><th scope="col">Core SD</th><th scope="col">Core MD</th><th scope="col">Core Avg.</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">Rank concatenation</th><td>14.97</td><td>12.71</td><td>13.84</td></tr>
+                  <tr><th scope="row">Latent averaging</th><td>62.40</td><td>28.64</td><td>45.52</td></tr>
+                  <tr><th scope="row">Latest Session</th><td>67.72</td><td>39.40</td><td>53.56</td></tr>
+                  <tr><th scope="row">Factor averaging</th><td>69.44</td><td>38.99</td><td>54.21</td></tr>
+                  <tr class="rpmem-row"><th scope="row">Learned gate (ours)</th><td><strong>90.89</strong></td><td><strong>80.15</strong></td><td><strong>85.52</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="study-takeaway">The learned gate gains <strong>31.31 percentage points</strong> over factor averaging, the strongest fixed rule evaluated here.</p>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="deployment">
+      <div class="container is-max-desktop">
+        <div class="content figure-intro">
+          <h2 class="title is-3 has-text-centered">More sessions, fixed-size memory</h2>
+          <p>At 64 accumulated sessions, RPMem updates memory in <strong>0.043 seconds</strong> and retains <strong>36.562 MiB</strong> per user. The reader receives no historical context tokens. Update time and retained state stay nearly constant across the measured history lengths.</p>
+        </div>
+        <div class="table-scroll" role="region" aria-label="Streaming deployment efficiency" tabindex="0">
+          <table class="results-table efficiency-table">
+            <caption>Online deployment at 64 sessions. Growth is the measured ratio between 64 sessions and one session. Lower is better; bold marks the best value, including ties.</caption>
+            <thead>
+              <tr><th scope="col" rowspan="2">Method</th><th scope="colgroup" colspan="2">Memory update</th><th scope="colgroup" colspan="2">Persistent memory</th><th scope="col" rowspan="2">Historical<br>query tokens</th></tr>
+              <tr><th scope="col">Time (s)</th><th scope="col">Growth</th><th scope="col">Size (MiB)</th><th scope="col">Growth</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Full Context</th><td>&mdash;</td><td>&mdash;</td><td><strong>0.138</strong></td><td>78.09&times;</td><td>28,498.4</td></tr>
+              <tr><th scope="row">Mem0</th><td>12.554</td><td>1.10&times;</td><td>20.041</td><td>62.11&times;</td><td>441.7</td></tr>
+              <tr class="group-start"><th scope="row">Adapter rank concatenation</th><td>0.948</td><td>29.46&times;</td><td>183.738</td><td>5.10&times;</td><td><strong>0</strong></td></tr>
+              <tr class="rpmem-row"><th scope="row">RPMem (ours)</th><td><strong>0.043</strong></td><td><strong>1.03&times;</strong></td><td>36.562</td><td><strong>1.00&times;</strong></td><td><strong>0</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="protocol-note measurement-note">Hot-update timings with models and services already resident. Persistent memory excludes shared model parameters. Full Context has no separate write operation. Here, rank concatenation recompiles accumulated history at each update; the consolidation ablation above instead uses session-wise adapters.</p>
+      </div>
+    </section>
+
+    <section class="section dynamics-band" id="memory-dynamics">
+      <div class="container is-max-desktop content">
+        <h2 class="title is-3 has-text-centered">What does the gate keep?</h2>
+        <p class="figure-intro">The gate writes and retains information differently according to its role in the history. Events that establish a new memory domain receive stronger writes than supplements; later updates revise same-domain information while preserving more of other domains.</p>
+        <figure class="dynamics-figure">
+          <a href="static/images/memory-dynamics.png" title="Open the full-resolution memory-dynamics figure">
+            <img src="static/images/memory-dynamics.png" alt="Six-panel PERMA analysis: emergence events receive larger writes than supplements; Clean and Noisy writes remain similar; same-domain updates have more similar write patterns but lower one-step source survival than cross-domain updates; emergence sources survive longer over 60 subsequent sessions." width="2600" height="1074" loading="lazy">
+          </a>
+          <figcaption>Qwen3-8B on held-out PERMA Clean-SD and Noisy-SD histories, analyzed after direct first-session initialization. (a-b) Write magnitude by event role and noise condition. (c-e) Domain-specific write patterns and source retention. (f) Source survival over subsequent sessions, on a logarithmic scale.</figcaption>
+        </figure>
+        <p class="figure-intro dynamics-takeaway">The emergence-to-supplement survival ratio grows from <strong>1.31&times;</strong> after one update to <strong>6.64&times;</strong> after 60. This traces the retained contribution of a session to the latent state, not a probability of answering correctly.</p>
+      </div>
+    </section>
+
+    <section class="section citation-band" id="citation">
+      <div class="container is-max-desktop content">
+        <div class="citation-heading">
+          <h2 class="title is-3">Citation</h2>
+          <button type="button" class="copy-citation" aria-label="Copy BibTeX" title="Copy BibTeX" hidden>
+            <img src="static/icons/copy.svg" width="20" height="20" alt="">
+          </button>
+        </div>
+        <pre class="bibtex"><code id="bibtex">@article{zhao2026rpmem,
+  title={RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents},
+  author={Zhao, Fanyu and Cao, Ruike and Dong, Liang and Yao, Fugen and Xu, Jian and
+          Jiang, Guanjun and Zhang, Han and Zhao, Yifei and Li, Yinsheng},
+  journal={arXiv preprint arXiv:2609.23466},
+  year={2026},
+  url={https://arxiv.org/abs/2609.23466}
+}</code></pre>
+        <p class="copy-status" role="status" aria-live="polite"></p>
+        <h3>Acknowledgements</h3>
+        <p>This work was supported by Qwen Business Unit through Alibaba Research Intern Program.</p>
+        <p>Our implementation builds extensively on <a href="https://github.com/SakanaAI/Doc-to-LoRA">Doc-to-LoRA (D2L)</a> by Sakana AI. We thank its authors for the open-source resampler, hypernetwork and LoRA utilities that provided a foundation for this work, and the authors of PERMA, PersonaMem-v2 and PrefEval for their benchmarks.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container is-max-desktop content has-text-centered">
+      <p>Website adapted from the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template">Academic Project Page Template</a>, based in part on <a href="https://nerfies.github.io/">Nerfies</a>.</p>
+      <p>The adapted website is licensed under <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Method code is licensed separately under Apache-2.0.</p>
+    </div>
+  </footer>
+</body>
+</html>
