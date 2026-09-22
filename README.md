@@ -3,6 +3,7 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2609.23466"><img src="https://img.shields.io/badge/arXiv-2609.23466-B31B1B?style=for-the-badge&amp;logo=arxiv&amp;logoColor=white" alt="Paper on arXiv"></a>
   <a href="https://quark-medical.github.io/rpmem/"><img src="https://img.shields.io/badge/Project-Page-146C70?style=for-the-badge" alt="Project page"></a>
+  <a href="https://huggingface.co/datasets/PolarSnowLeopard/RPMem-data"><img src="https://img.shields.io/badge/Hugging_Face-Data-FFD21E?style=for-the-badge&amp;logo=huggingface&amp;logoColor=black" alt="Dataset on Hugging Face"></a>
   <a href="docs/README.md"><img src="https://img.shields.io/badge/Read-Documentation-2563EB?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white" alt="Documentation"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-287C61?style=for-the-badge&amp;logo=apache&amp;logoColor=white" alt="Apache 2.0 license"></a>
 </p>
@@ -78,10 +79,15 @@ The example compiles synthetic session features, consolidates memory, and trains
 the gate using tiny random modules. A successful run prints
 `Gate training passed; compiler and backbone remained frozen.`
 
-> **Data and checkpoints:** Prepared datasets and teacher targets are not released
-> yet; trained compiler and gate checkpoints are not included. Data-preparation
-> code is provided. For the workflows below, supply your own prepared inputs and
-> matching checkpoints. See [data preparation](docs/data.md).
+## Data
+
+Prepared data is available on [Hugging Face](https://huggingface.co/datasets/PolarSnowLeopard/RPMem-data)
+(4.3 GB): the compiler corpus with probes and splits, plus PERMA, PersonaMem-v2,
+and PrefEval. Teacher caches and trained checkpoints are not included.
+
+```bash
+hf download PolarSnowLeopard/RPMem-data --repo-type dataset --local-dir data/rpmem
+```
 
 ## Usage
 
@@ -122,12 +128,12 @@ python -m pip install -e '.[train,experiments]'
 
 ### Stage 1: Train the session compiler
 
-Prepare the session/probe corpus and matching teacher targets using the
-[data guide](docs/data.md). The following uses the Qwen3-8B configuration
+Use the downloaded corpus and generate matching teacher targets using the
+[data guide](docs/data.md#teacher-targets). The following uses the Qwen3-8B configuration
 with eight GPUs; `CORPUS_ROOT` and `TEACHER_ROOT` point to your local inputs.
 
 ```bash
-export CORPUS_ROOT=/path/to/compiler-corpus
+export CORPUS_ROOT="$PWD/data/rpmem/compiler"
 export TEACHER_ROOT=/path/to/qwen3-8b-teacher
 
 accelerate launch --config_file configs/accelerate_8gpu.yaml -m rpmem.training.train_hypernet \
@@ -144,7 +150,7 @@ held-out user:
 ```bash
 CHECKPOINT=outputs/compiler/pytorch_model.bin \
 BASE_MODEL_PATH=Qwen/Qwen3-8B CTX_ENCODER_PATH=answerdotai/ModernBERT-base \
-PERMA_DATA_ROOT=data/perma FIRST_SESSION_RULE=gate_zero_state \
+PERMA_DATA_ROOT=data/rpmem/benchmarks/perma FIRST_SESSION_RULE=gate_zero_state \
 VARIANT=clean_sd TEST_USER=334 bash scripts/run_perma.sh
 ```
 
