@@ -13,8 +13,6 @@
 
 Official implementation of **RPMem**.
 
-> This codebase builds extensively on [Doc-to-LoRA (D2L)](https://github.com/SakanaAI/Doc-to-LoRA). We thank the authors for sharing their implementation.
-
 ## Overview
 
 RPMem learns recurrent parametric memory for LLM agents. A session compiler maps
@@ -139,10 +137,8 @@ python "experiments/$BENCHMARK/run_eval.py" \
 
 ## Acknowledgements
 
-Our implementation is based on [Doc-to-LoRA (D2L)](https://github.com/SakanaAI/Doc-to-LoRA),
-including the Perceiver resampler, hypernetwork, and LoRA injection and merging.
-Please also cite the [D2L paper](https://arxiv.org/abs/2602.15902) when using these components.
-We thank the authors of D2L, Idefics2, PERMA, PersonaMem-v2, and PrefEval.
+We thank the authors of [Doc-to-LoRA (D2L)](https://github.com/SakanaAI/Doc-to-LoRA),
+Idefics2, PERMA, PersonaMem-v2, and PrefEval for their open-source work.
 
 This work was supported by Qwen Business Unit through Alibaba Research Intern Program.
 
