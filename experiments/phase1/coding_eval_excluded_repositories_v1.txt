@@ -1,0 +1,113 @@
+# Frozen coding-evaluation repository exclusion manifest, version 1.
+#
+# Dataset: SWE-bench-Live/SWE-bench-Live
+# Revision: a637bd46829f3132e12938c8a0ca93173a977b8e
+# Split: verified
+# Tasks: 500
+# Repositories: 100
+# Task created_at range: 2024-07-07T15:20:53 to 2025-04-30T20:00:24
+# Frozen: 2026-07-12
+#
+# One lower-case owner/repository per line. Every repository in the pinned
+# verified split is excluded, even if only a subset is used in the final
+# chronological multi-session coding-memory evaluation.
+ag2ai/faststream
+aider-ai/aider
+aiogram/aiogram
+amoffat/sh
+ansible/ansible-lint
+apify/crawlee-python
+arviz-devs/arviz
+aws-cloudformation/cfn-lint
+azure/azure-sdk-for-python
+beancount/beancount
+beetbox/beets
+beeware/briefcase
+berriai/litellm
+bridgecrewio/checkov
+conan-io/conan
+cyclotruc/gitingest
+deepset-ai/haystack
+delgan/loguru
+dynaconf/dynaconf
+encode/starlette
+facelessuser/pymdown-extensions
+falconry/falcon
+feature-engine/feature_engine
+flexget/flexget
+fonttools/fonttools
+fsspec/filesystem_spec
+geopandas/geopandas
+hiyouga/llama-factory
+home-assistant/supervisor
+huggingface/datasets
+huggingface/smolagents
+icloud-photos-downloader/icloud_photos_downloader
+instructlab/instructlab
+ipython/ipython
+iterative/dvc
+jarun/buku
+jazzband/tablib
+jlowin/fastmcp
+joke2k/faker
+jupyterlab/jupyter-ai
+kedro-org/kedro
+keras-team/keras
+koxudaxi/datamodel-code-generator
+kozea/radicale
+kozea/weasyprint
+kubernetes-client/python
+lss233/kirara-ai
+matplotlib/matplotlib
+meta-llama/llama-stack
+mikedh/trimesh
+networktocode/ntc-templates
+networkx/networkx
+olofk/fusesoc
+openai/openai-agents-python
+pallets/flask
+patroni/patroni
+pdm-project/pdm
+piskvorky/smart_open
+privacyidea/privacyidea
+projectmesa/mesa
+pvlib/pvlib-python
+pwr-solaar/solaar
+pybamm-team/pybamm
+pyca/cryptography
+pydata/xarray
+pylint-dev/pylint
+pyomo/pyomo
+pypa/pipenv
+pypa/twine
+pypsa/pypsa
+python-attrs/attrs
+python-babel/babel
+python-control/python-control
+python-poetry/poetry
+python-telegram-bot/python-telegram-bot
+python/mypy
+pytorch/torchtune
+pytransitions/transitions
+qtile/qtile
+quantumlib/cirq
+qubvel-org/segmentation_models.pytorch
+reata/sqllineage
+reflex-dev/reflex
+run-llama/llama_deploy
+scrapy-plugins/scrapy-splash
+sdv-dev/sdv
+shapely/shapely
+sissbruecker/linkding
+sooperset/mcp-atlassian
+sphinx-doc/sphinx
+stanfordnlp/dspy
+streamlink/streamlink
+sympy/sympy
+textualize/textual
+theoehrly/fast-f1
+tox-dev/tox
+urllib3/urllib3
+wemake-services/wemake-python-styleguide
+wireservice/csvkit
+yt-dlp/yt-dlp

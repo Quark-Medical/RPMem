@@ -1,0 +1,8 @@
+RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents
+
+RPMem is distributed under the Apache License, Version 2.0.
+
+This distribution includes portions adapted from Doc-to-LoRA (Sakana AI)
+and the Hugging Face Idefics2 implementation. Applicable copyright,
+attribution, and license notices are preserved in THIRD_PARTY_NOTICES.md,
+LICENSES/, and the relevant source files.

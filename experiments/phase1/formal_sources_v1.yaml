@@ -1,0 +1,108 @@
+format: memlora_source_normalization_v1
+tokenizer: models/Qwen3-8B
+tokenizer_name: qwen3_8b
+tokenizer_revision: local-frozen-snapshot
+context_tokenizers:
+  - name: modernbert_base
+    path: models/ModernBERT-base
+    revision: local-frozen-snapshot
+    add_special_tokens: true
+max_context_tokens: 4096
+rows_per_shard: 4096
+source_batch_rows: 1024
+event_overlap: 1
+workers: 96
+log_every: 10000
+near_duplicate_hamming: 3
+minimum_near_tokens: 20
+target_context_tokens: 550000000
+target_domain_token_shares:
+  conversation: 0.35
+  tool: 0.25
+  coding: 0.20
+  synthetic: 0.20
+enforce_launch_gates: true
+minimum_accepted_sessions: 500000
+minimum_context_tokens: 500000000
+token_share_tolerance: 0.03
+
+output_dir: ../../data/phase1/formal_v1/normalized
+
+sources:
+  - name: ultrachat_200k
+    domain: conversation
+    adapter: messages
+    paths:
+      - ../../data/phase1/formal_v1/raw/ultrachat_200k/data/*.parquet
+    license: MIT
+    revision: 8049631c405ae6576f93f445c6b8166f76f5505a
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/HuggingFaceH4/ultrachat_200k
+
+  - name: taskmaster2
+    domain: tool
+    adapter: taskmaster
+    paths:
+      - ../../data/phase1/formal_v1/raw/taskmaster2/*/*.parquet
+    license: CC-BY-4.0
+    revision: 333d425dd1f53e9fe8f0cf6d8d08033fd6a811f9
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/DeepPavlov/TaskMaster2
+
+  - name: schema_guided_dialog
+    domain: tool
+    adapter: schema_guided_dialog
+    paths:
+      - ../../data/phase1/formal_v1/raw/schema_guided_dialog/train/dialogues_*.json
+    license: CC-BY-SA-4.0
+    revision: e852981ae34990f4358979625854259302feaa78
+    external_api_allowed: false
+    source_url: https://github.com/google-research-datasets/dstc8-schema-guided-dialogue
+
+  # Curated tool-agent trajectories only. The other Toucan configurations are
+  # substantially larger raw generations and are intentionally not downloaded.
+  - name: toucan_sft
+    domain: tool
+    adapter: tool_messages
+    paths:
+      - ../../data/phase1/formal_v1/raw/toucan_sft/SFT/*.parquet
+    license: Apache-2.0
+    revision: 0df3cf37f2abefb380370cfb02eabea2a35ae782
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/Agent-Ark/Toucan-1.5M
+    drop_system_messages: true
+    drop_assistant_reasoning: true
+    excluded_tool_names:
+      - think
+    max_tool_result_reference_chars: 512
+
+  - name: swe_zero_openhands
+    domain: coding
+    adapter: swe_zero
+    paths:
+      - ../../data/phase1/formal_v1/raw/swe_zero_openhands/data/*.parquet
+    license: CC-BY-4.0-plus-source-repository-licenses
+    revision: 7b3cd106d00f60918e722d33a1d74bc67072a7ea
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/nvidia/SWE-Zero-openhands-trajectories
+    drop_system_messages: true
+    drop_assistant_reasoning: true
+    excluded_tool_names:
+      - think
+    max_tool_result_reference_chars: 512
+    stop_when_domain_budget_remaining_below: 4096
+    excluded_repositories_file: coding_eval_excluded_repositories_v1.txt
+    require_excluded_repositories: true
+
+  - name: controlled_synthetic
+    domain: synthetic
+    adapter: d2l_tokenized
+    paths:
+      - ../../data/raw_datasets/self_gen/mistralai/Mistral-7B-Instruct-v0.2_temp_0.0_closed_qa_prob_1.0/fw_qa_v2/min_0_to_2000/train/*level_1*.parquet
+    license: project-generated-research-data
+    revision: SakanaAI-self_gen_qa_d2l-main-required-shards
+    decode_tokenizer: models/Mistral-7B-Instruct-v0.2
+    decode_tokenizer_revision: local-frozen-snapshot
+    stop_when_domain_budget_remaining_below: 4096
+    external_api_allowed: false
+    source_url: https://huggingface.co/datasets/SakanaAI/self_gen_qa_d2l
