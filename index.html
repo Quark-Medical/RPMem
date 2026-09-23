@@ -8,38 +8,34 @@
   <meta property="og:description" content="Session compilation, recurrent memory consolidation, and backbone-specific decoding.">
   <meta property="og:type" content="article">
   <title>RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents</title>
-  <link rel="stylesheet" href="static/css/bulma.min.css">
-  <link rel="stylesheet" href="static/css/rpmem.css?v=a20dd12939fd">
+  <link rel="stylesheet" href="static/css/rpmem.css?v=memcalib-style">
   <script src="static/js/results.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#overview">Skip to overview</a>
   <main>
-    <section class="hero">
+    <section class="hero" id="top">
       <div class="hero-body">
         <div class="container is-max-desktop has-text-centered">
           <h1 class="title publication-title">RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents</h1>
           <div class="publication-authors">
-            <span class="author-block">Fanyu Zhao<sup>1,2,*</sup>,</span>
-            <span class="author-block">Ruike Cao<sup>2,*</sup>,</span>
-            <span class="author-block">Liang Dong<sup>2,&dagger;</sup>,</span>
-            <span class="author-block">Fugen Yao<sup>2</sup>,</span>
-            <span class="author-block">Jian Xu<sup>2</sup>,</span>
-            <span class="author-block">Guanjun Jiang<sup>2</sup>,</span>
-            <span class="author-block">Han Zhang<sup>1</sup>,</span>
-            <span class="author-block">Yifei Zhao<sup>1</sup>,</span>
+            <span class="author-block">Fanyu Zhao<sup>1,2,*</sup></span>
+            <span class="author-block">Ruike Cao<sup>2,*</sup></span>
+            <span class="author-block">Liang Dong<sup>2,&dagger;</sup></span>
+            <span class="author-block">Fugen Yao<sup>2</sup></span>
+            <span class="author-block">Jian Xu<sup>2</sup></span>
+            <span class="author-break" aria-hidden="true"></span>
+            <span class="author-block">Guanjun Jiang<sup>2</sup></span>
+            <span class="author-block">Han Zhang<sup>1</sup></span>
+            <span class="author-block">Yifei Zhao<sup>1</sup></span>
             <span class="author-block">Yinsheng Li<sup>1,&dagger;</sup></span>
           </div>
-          <p class="affiliations"><sup>1</sup> Fudan University<br><sup>2</sup> Qwen Business Unit of Alibaba</p>
+          <p class="affiliations"><span><sup>1</sup> Fudan University</span><span><sup>2</sup> Qwen Business Unit of Alibaba</span></p>
           <p class="author-notes">* Equal contribution. &dagger; Corresponding authors.</p>
           <div class="publication-links">
-            <a class="button is-dark" href="https://arxiv.org/abs/2609.23466">Paper</a>
-            <a class="button is-outlined" href="https://arxiv.org/pdf/2609.23466">PDF</a>
-            <a class="button is-dark" href="https://github.com/Quark-Medical/rpmem">Code</a>
-            <a class="button is-outlined" href="#overview">Method</a>
-            <a class="button is-outlined" href="#results">Results</a>
-            <a class="button is-outlined" href="#analysis">Analysis</a>
-            <a class="button is-outlined" href="#citation">Cite</a>
+            <a href="https://arxiv.org/abs/2609.23466"><img src="static/icons/file-text.svg" width="17" height="17" alt="">Paper</a>
+            <a href="https://github.com/Quark-Medical/rpmem"><img src="static/icons/code-xml.svg" width="17" height="17" alt="">Code</a>
+            <a href="https://huggingface.co/datasets/PolarSnowLeopard/RPMem-data"><img src="static/icons/database.svg" width="17" height="17" alt="">Dataset</a>
           </div>
         </div>
       </div>
@@ -57,14 +53,12 @@
     </section>
 
     <section class="section abstract-band">
-      <div class="container is-max-desktop">
-        <div class="columns is-centered">
-          <div class="column is-four-fifths content">
-            <h2 class="title is-3 has-text-centered">Memory across sessions</h2>
+      <div class="container is-max-desktop abstract-layout">
+        <h2 class="title">Memory across sessions</h2>
+        <div class="abstract-copy content">
             <p>Long-running LLM agents need memory that persists and evolves. Text-based memory retrieves and reconstructs past interactions at each query. RPMem instead compiles session information into model computation through low-rank adaptation.</p>
             <p>The architecture separates session encoding, recurrent consolidation, and backbone-specific decoding. A frozen context encoder and a trainable Perceiver compile each bounded session into fixed-shape latent memory. A task-trained gate integrates new sessions with retained memory, and a decoder maps the consolidated state to LoRA parameters.</p>
             <p>This separation supports decoder-head adaptation when the backbone changes. The paper studies long-term memory on PERMA, PersonaMem-v2, and PrefEval, alongside cross-backbone transfer and memory dynamics.</p>
-          </div>
         </div>
       </div>
     </section>
@@ -74,10 +68,12 @@
         <h2 class="title is-3 has-text-centered">Two stages, one persistent memory</h2>
         <div class="columns">
           <div class="column">
+            <p class="stage-label">Stage 1</p>
             <h3>Session compilation</h3>
             <p>The compiler learns from a history-aware teacher using a fixed-reference forward-KL objective. The reader and context encoder stay frozen while the Perceiver and LoRA decoder are trained.</p>
           </div>
           <div class="column">
+            <p class="stage-label">Stage 2</p>
             <h3>Recurrent consolidation</h3>
             <p>Downstream supervision trains a lightweight gate to retain and update session memory. At deployment, bounded sessions update a fixed-size state without reprocessing the entire history.</p>
           </div>
@@ -277,9 +273,13 @@
   url={https://arxiv.org/abs/2609.23466}
 }</code></pre>
         <p class="copy-status" role="status" aria-live="polite"></p>
-        <h3>Acknowledgements</h3>
-        <p>This work was supported by Qwen Business Unit through Alibaba Research Intern Program.</p>
-        <p>We thank the authors of <a href="https://github.com/SakanaAI/Doc-to-LoRA">Doc-to-LoRA (D2L)</a>, Idefics2, PERMA, PersonaMem-v2, and PrefEval for their open-source work.</p>
+        <div class="acknowledgements">
+          <h3>Acknowledgements</h3>
+          <div>
+            <p>This work was supported by Qwen Business Unit through Alibaba Research Intern Program.</p>
+            <p>We thank the authors of <a href="https://github.com/SakanaAI/Doc-to-LoRA">Doc-to-LoRA (D2L)</a>, Idefics2, PERMA, PersonaMem-v2, and PrefEval for their open-source work.</p>
+          </div>
+        </div>
       </div>
     </section>
   </main>
