@@ -18,12 +18,12 @@ authors:
     given-names: Jian
   - family-names: Jiang
     given-names: Guanjun
-  - family-names: Zhang
-    given-names: Han
-  - family-names: Zhao
-    given-names: Yifei
   - family-names: Li
     given-names: Yinsheng
+  - family-names: Zhao
+    given-names: Yifei
+  - family-names: Zhang
+    given-names: Han
 preferred-citation:
   type: article
   title: "RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents"
@@ -43,9 +43,9 @@ preferred-citation:
       given-names: Jian
     - family-names: Jiang
       given-names: Guanjun
-    - family-names: Zhang
-      given-names: Han
-    - family-names: Zhao
-      given-names: Yifei
     - family-names: Li
       given-names: Yinsheng
+    - family-names: Zhao
+      given-names: Yifei
+    - family-names: Zhang
+      given-names: Han

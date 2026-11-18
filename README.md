@@ -1,14 +1,19 @@
 <h1 align="center">RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents</h1>
 
 <p align="center">
-  Fanyu Zhao, Ruike Cao, Liang Dong, Fugen Yao, Jian Xu,<br>
-  Guanjun Jiang, Han Zhang, Yifei Zhao, Yinsheng Li
+  Fanyu Zhao<sup>*</sup>, Ruike Cao<sup>*</sup>, Liang Dong<sup>&dagger;</sup>, Fugen Yao, Jian Xu,<br>
+  Guanjun Jiang, Yinsheng Li<sup>&dagger;</sup>, Yifei Zhao<sup>&dagger;</sup>, Han Zhang<sup>&dagger;</sup>
+</p>
+
+<p align="center">
+  * Equal contribution. &dagger; Corresponding authors.
 </p>
 
 <p align="center">
   <a href="https://arxiv.org/abs/2609.23466"><img src="https://img.shields.io/badge/arXiv-2609.23466-B31B1B?logo=arxiv&amp;logoColor=white" alt="Paper"></a>
   <a href="https://quark-medical.github.io/RPMem/"><img src="https://img.shields.io/badge/Project-Page-146C70" alt="Project page"></a>
   <a href="https://huggingface.co/datasets/PolarSnowLeopard/RPMem-data"><img src="https://img.shields.io/badge/Hugging_Face-Data-FFD21E?logo=huggingface&amp;logoColor=black" alt="Dataset"></a>
+  <a href="https://github.com/Quark-Medical/RPMem/stargazers"><img src="https://img.shields.io/github/stars/Quark-Medical/RPMem?style=flat&amp;logo=github&amp;label=Stars&amp;color=gold" alt="GitHub stars"></a>
 </p>
 
 Official implementation of **RPMem**.
@@ -128,7 +133,7 @@ python "experiments/$BENCHMARK/run_eval.py" \
 @article{zhao2026rpmem,
   title={RPMem: Learning Long-Term Recurrent Parametric Memory Across Sessions for LLM Agents},
   author={Zhao, Fanyu and Cao, Ruike and Dong, Liang and Yao, Fugen and Xu, Jian and
-          Jiang, Guanjun and Zhang, Han and Zhao, Yifei and Li, Yinsheng},
+          Jiang, Guanjun and Li, Yinsheng and Zhao, Yifei and Zhang, Han},
   journal={arXiv preprint arXiv:2609.23466},
   year={2026},
   url={https://arxiv.org/abs/2609.23466}
